@@ -1,63 +1,371 @@
-import React, { useMemo, useState } from 'react';
-import { ArrowDownRight, ArrowRight, BookOpen, CalendarDays, Menu, Search, X } from 'lucide-react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-type Article = { id: number; category: string; date: string; title: string; excerpt: string; author: string; read: string; image: string; featured?: boolean; };
-const articles: Article[] = [
-  { id: 1, category: 'Comunidad', date: 'GUÍA PARA LA GENERACIÓN', title: 'Un nuevo capítulo comienza aquí', excerpt: 'Un espacio para compartir ideas, experiencias y todo lo que hace única a nuestra generación 2026–2030.', author: 'Redacción LEAF', read: '4 min', image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1400&q=85', featured: true },
-  { id: 2, category: 'Vida estudiantil', date: 'EN LA NORMAL', title: 'Cómo organizarte para aprender mejor', excerpt: 'Ideas sencillas para planear tus semanas, cuidar tu tiempo y aprovechar cada clase sin saturarte.', author: 'Equipo editorial', read: '5 min', image: 'https://images.unsplash.com/photo-1455390582262-044cdae0bbc7?auto=format&fit=crop&w=900&q=80' },
-  { id: 3, category: 'Aprendizaje', date: 'RECURSOS', title: 'Aprender física más allá del salón', excerpt: 'Experimentos cotidianos, preguntas curiosas y recursos para mirar el mundo con otros ojos.', author: 'Equipo editorial', read: '6 min', image: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=900&q=80' },
-  { id: 4, category: 'Comunidad', date: 'PARTICIPA', title: 'Las historias que también merecen contarse', excerpt: 'Proyectos, recomendaciones, aprendizajes y voces de estudiantes: este espacio se construye entre todos.', author: 'Redacción LEAF', read: '3 min', image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80' },
-  { id: 5, category: 'Aprendizaje', date: 'HERRAMIENTAS', title: 'Un método de estudio que sí se adapta a ti', excerpt: 'Prueba distintas técnicas, encuentra la que te funciona y convierte el estudio en un hábito sostenible.', author: 'Equipo editorial', read: '4 min', image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=900&q=80' },
-  { id: 6, category: 'Vida estudiantil', date: 'BIENESTAR', title: 'También es importante hacer una pausa', excerpt: 'Descansar, pedir apoyo y mantener el equilibrio forma parte de una experiencia escolar más saludable.', author: 'Equipo editorial', read: '4 min', image: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=900&q=80' },
-];
-const categories = ['Todo', 'Comunidad', 'Vida estudiantil', 'Aprendizaje'];
+import React, { useState, useEffect } from 'react';
+import { INITIAL_CURRICULUM, STORAGE_KEY } from './data/defaultCurriculum';
+import { Semester, ModuleItem, EmergentTechTeamVideo } from './types/curriculum';
+import { SemesterView } from './components/SemesterView';
+import { ModuleDetailView } from './components/ModuleDetailView';
+import { EditModuleModal } from './components/EditModuleModal';
+import { AddModuleModal } from './components/AddModuleModal';
+import { DataManagementModal } from './components/DataManagementModal';
+import { 
+  Compass, 
+  ChevronRight, 
+  Edit3, 
+  Download 
+} from 'lucide-react';
 
 export default function App() {
-  const [category, setCategory] = useState('Todo');
-  const [search, setSearch] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeArticle, setActiveArticle] = useState<Article | null>(null);
-  const filtered = useMemo(() => articles.filter(a => (category === 'Todo' || a.category === category) && (a.title + ' ' + a.excerpt + ' ' + a.category).toLowerCase().includes(search.toLowerCase())), [category, search]);
-  const featured = articles[0];
-  const rest = filtered.filter(a => a.id !== featured.id);
-  const showFeatured = category === 'Todo' && search.length === 0;
-  return <div className="site-shell">
-    <div className="topline"><span>UN ESPACIO PARA NUESTRA GENERACIÓN</span><span>MONTERREY · 2026—2030</span></div>
-    <header className="site-header">
-      <a className="brand" href="#inicio" onClick={() => { setCategory('Todo'); setSearch(''); }}><span className="brand-mark">L.</span><span><strong>LEAF<span className="brand-year">2026—2030</span></strong><small>Ideas, historias y comunidad</small></span></a>
-      <nav className={menuOpen ? 'main-nav nav-open' : 'main-nav'}>
-        <a href="#articulos" onClick={() => setMenuOpen(false)}>Artículos</a><a href="#comunidad" onClick={() => setMenuOpen(false)}>Comunidad</a><a href="#acerca" onClick={() => setMenuOpen(false)}>Acerca de</a>
-      </nav>
-      <a className="header-cta" href="#articulos">Explorar <ArrowDownRight size={16}/></a>
-      <button className="mobile-menu" aria-label="Abrir menú" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X/> : <Menu/>}</button>
-    </header>
-    <main id="inicio">
-      <section className="hero">
-        <div className="hero-copy"><p className="eyebrow"><span className="eyebrow-dot"/> REVISTA ESTUDIANTIL · GENERACIÓN 2026—2030</p><h1>Lo que vivimos.<br/><em>Lo que aprendemos.</em><br/>Lo que compartimos.</h1><p className="hero-description">Un lugar para descubrir ideas, contar nuestras experiencias y darle voz a todo lo que construimos como comunidad.</p><a className="primary-link" href="#articulos">Leer las historias <ArrowRight size={17}/></a><div className="hero-note"><span className="note-line"/> HECHO PARA APRENDER JUNTOS</div></div>
-        <div className="hero-visual"><img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=85" alt="Estudiantes compartiendo una experiencia de aprendizaje"/><div className="image-caption"><span>01 / NUESTRA COMUNIDAD</span><span>Un mismo camino, muchas historias.</span></div><div className="floating-stamp"><BookOpen size={22}/><span>LEE · PIENSA<br/>COMPARTE</span></div></div>
-        <div className="hero-index"><span>01</span><span className="index-rule"/><span>03</span></div>
-      </section>
-      <section className="featured-section" aria-label="Artículo destacado">
-        <div className="section-kicker"><span>01 — PARA EMPEZAR</span><span>UNA PUBLICACIÓN DE LEAF</span></div>
-        <button className="featured-card" onClick={() => setActiveArticle(featured)}>
-          <div className="featured-image"><img src={featured.image} alt="Estudiantes en un espacio de aprendizaje"/><span className="image-tag">DESTACADO</span></div>
-          <div className="featured-text"><p className="eyebrow">{featured.category} <span>·</span> {featured.read} de lectura</p><h2>{featured.title}</h2><p>{featured.excerpt}</p><span className="text-link">Descubrir artículo <ArrowRight size={16}/></span><div className="article-meta"><span>POR {featured.author.toUpperCase()}</span><span><CalendarDays size={14}/> EDICIÓN 2026—2030</span></div></div>
-        </button>
-      </section>
-      <section className="articles-section" id="articulos">
-        <div className="articles-heading"><div><p className="eyebrow">02 — EL BLOG</p><h2>Ideas para <em>llevar contigo.</em></h2></div><p>Lecturas, recursos y pequeñas ideas para acompañar tu camino como estudiante.</p></div>
-        <div className="filter-row"><div className="category-tabs">{categories.map(c => <button key={c} className={category === c ? 'category-tab active' : 'category-tab'} onClick={() => setCategory(c)}>{c}</button>)}</div><label className="search-box"><Search size={16}/><input aria-label="Buscar artículos" placeholder="Buscar historias..." value={search} onChange={e => setSearch(e.target.value)}/>{search && <button aria-label="Limpiar búsqueda" onClick={() => setSearch('')}><X size={14}/></button>}</label></div>
-        {showFeatured && <div className="article-grid">{rest.map((article, i) => <ArticleCard key={article.id} article={article} index={i} onOpen={() => setActiveArticle(article)}/>)}</div>}
-        {!showFeatured && <div className="article-grid">{filtered.map((article, i) => <ArticleCard key={article.id} article={article} index={i} onOpen={() => setActiveArticle(article)}/>)}</div>}
-        {filtered.length === 0 && <div className="empty-state"><Search size={26}/><h3>No encontramos historias</h3><p>Prueba con otra palabra o elige una categoría diferente.</p><button className="text-link" onClick={() => { setSearch(''); setCategory('Todo'); }}>Ver todos los artículos <ArrowRight size={16}/></button></div>}
-      </section>
-      <section className="community-band" id="comunidad"><div className="community-number">03 / PARTICIPA</div><div><p className="eyebrow">ESTE ESPACIO TAMBIÉN ES TUYO</p><h2>Las buenas ideas<br/><em>crecen cuando se comparten.</em></h2></div><a href="https://github.com/normalmsgestala/pagina-/issues" target="_blank" rel="noreferrer" className="community-button">Propón una historia <ArrowRight size={17}/></a><span className="community-decoration">L</span></section>
-      <section className="about-strip" id="acerca"><span className="about-label">SOBRE LEAF</span><p>LEAF 2026—2030 es un espacio editorial estudiantil para compartir aprendizajes, experiencias y noticias de nuestra comunidad. <strong>Las publicaciones se irán construyendo con las aportaciones de la generación.</strong></p><a href="https://github.com/normalmsgestala/pagina-" target="_blank" rel="noreferrer">Conoce el proyecto <ArrowRight size={15}/></a></section>
-    </main>
-    <footer className="site-footer"><a className="footer-brand" href="#inicio">LEAF<span>2026—2030</span></a><span>HECHO CON CURIOSIDAD Y EN COMUNIDAD.</span><a href="#inicio">VOLVER ARRIBA ↑</a><small>© 2026 LEAF · Generación 2026—2030</small></footer>
-    {activeArticle && <div className="modal-backdrop" role="presentation" onClick={() => setActiveArticle(null)}><article className="article-modal" role="dialog" aria-modal="true" aria-label={activeArticle.title} onClick={e => e.stopPropagation()}><button className="modal-close" aria-label="Cerrar artículo" onClick={() => setActiveArticle(null)}><X/></button><img className="modal-image" src={activeArticle.image} alt=""/><div className="modal-content"><p className="eyebrow">{activeArticle.category} · {activeArticle.read} DE LECTURA</p><h2>{activeArticle.title}</h2><p className="modal-byline">POR {activeArticle.author.toUpperCase()} · LEAF 2026—2030</p><p>{activeArticle.excerpt}</p><p>Este espacio está pensado para compartir experiencias, ideas y recursos útiles para nuestra generación. Muy pronto encontrarás aquí nuevas publicaciones y voces de la comunidad.</p><button className="primary-link" onClick={() => setActiveArticle(null)}>Volver al blog <ArrowRight size={16}/></button></div></article></div>}
-  </div>;
-}
-function ArticleCard({ article, index, onOpen }: { article: Article; index: number; onOpen: () => void }) {
-  return <button className="article-card" onClick={onOpen}><div className="card-image"><img src={article.image} alt=""/><span className="card-number">0{index + 1}</span><span className="card-arrow"><ArrowDownRight size={18}/></span></div><div className="card-content"><div className="card-meta"><span>{article.category}</span><span>{article.read} de lectura</span></div><h3>{article.title}</h3><p>{article.excerpt}</p><div className="card-footer"><span>{article.author}</span><span>LEER MÁS ↗</span></div></div></button>;
+  // Curriculum state persisted in localStorage
+  const [curriculum, setCurriculum] = useState<Semester[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Error loading saved curriculum:', e);
+    }
+    return INITIAL_CURRICULUM;
+  });
+
+  // Navigation state:
+  // view: 'home' | 'semester' | 'module'
+  const [view, setView] = useState<'home' | 'semester' | 'module'>('home');
+  const [activeSemesterNum, setActiveSemesterNum] = useState<number>(1);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+
+  // Edit mode and modal states
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [moduleToEdit, setModuleToEdit] = useState<ModuleItem | null>(null);
+  const [isAddingModule, setIsAddingModule] = useState<boolean>(false);
+  const [isDataModalOpen, setIsDataModalOpen] = useState<boolean>(false);
+
+  // Auto-save changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(curriculum));
+    } catch (e) {
+      console.error('Error saving curriculum:', e);
+    }
+  }, [curriculum]);
+
+  // Current active semester
+  const currentSemester = curriculum.find((s) => s.number === activeSemesterNum) || curriculum[0];
+
+  // Current selected module / project
+  const selectedModule = currentSemester.modules.find((m) => m.id === selectedModuleId) || null;
+
+  // Navigation handlers
+  const goToHome = () => {
+    setView('home');
+    setSelectedModuleId(null);
+  };
+
+  const goToSemester = (semNum: number) => {
+    setActiveSemesterNum(semNum);
+    setSelectedModuleId(null);
+    setView('semester');
+  };
+
+  const goToModule = (modId: string, semNum?: number) => {
+    if (semNum !== undefined) setActiveSemesterNum(semNum);
+    setSelectedModuleId(modId);
+    setView('module');
+  };
+
+  // Content updates
+  const handleUpdateModule = (updated: ModuleItem) => {
+    setCurriculum((prev) =>
+      prev.map((sem) => {
+        if (sem.number !== updated.semesterNumber) return sem;
+        return {
+          ...sem,
+          modules: sem.modules.map((m) => (m.id === updated.id ? updated : m))
+        };
+      })
+    );
+  };
+
+  const handleAddNewModule = (newMod: ModuleItem) => {
+    setCurriculum((prev) =>
+      prev.map((sem) => {
+        if (sem.number !== newMod.semesterNumber) return sem;
+        return {
+          ...sem,
+          modules: [...sem.modules, newMod]
+        };
+      })
+    );
+  };
+
+  const handleUpdateEmergentVideo = (updatedVideo: EmergentTechTeamVideo) => {
+    setCurriculum((prev) =>
+      prev.map((sem) => {
+        if (sem.number !== 1) return sem;
+        return {
+          ...sem,
+          emergentTechVideos: (sem.emergentTechVideos || []).map((v) =>
+            v.id === updatedVideo.id ? updatedVideo : v
+          ),
+        };
+      })
+    );
+  };
+
+  const handleImportCurriculum = (imported: Semester[]) => {
+    setCurriculum(imported);
+    goToHome();
+  };
+
+  const handleResetCurriculum = () => {
+    setCurriculum(INITIAL_CURRICULUM);
+    goToHome();
+  };
+
+  return (
+    <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col font-sans antialiased">
+      {/* Top Bar (Minimalist 3-zone contract) */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-stone-200/80">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          {/* Wordmark */}
+          <button
+            onClick={goToHome}
+            className="text-left cursor-pointer focus:outline-hidden"
+          >
+            <span className="text-sm sm:text-base font-bold text-stone-900 font-display hover:text-amber-900 transition-colors">
+              Normal Superior Profesor Moisés Sáenz
+            </span>
+          </button>
+
+          {/* Clean Navigation Links */}
+          <nav className="flex items-center gap-4 text-xs font-medium text-stone-600">
+            <button
+              onClick={goToHome}
+              className={`hover:text-stone-900 transition-colors cursor-pointer ${
+                view === 'home' ? 'text-amber-800 font-bold' : ''
+              }`}
+            >
+              Inicio
+            </button>
+
+            <button
+              onClick={() => goToSemester(1)}
+              className={`hover:text-stone-900 transition-colors cursor-pointer ${
+                view === 'semester' && activeSemesterNum === 1 ? 'text-amber-800 font-bold' : ''
+              }`}
+            >
+              1° Semestre (5 Equipos)
+            </button>
+
+            <button
+              onClick={() => goToModule('sem1-eq4', 1)}
+              className={`hidden sm:inline-flex items-center gap-1 hover:text-stone-900 transition-colors cursor-pointer ${
+                view === 'module' && selectedModuleId === 'sem1-eq4' ? 'text-amber-800 font-bold' : ''
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5 text-amber-600" />
+              <span>Equipo 4: Reloj Ecuatorial</span>
+            </button>
+            <a href="/pagina-/blog/" className="hidden md:inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Blog LEAF ↗</a>
+          </nav>
+
+          {/* Quiet Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                isEditMode
+                  ? 'bg-amber-600 text-white'
+                  : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
+              }`}
+              title="Modo para editar o actualizar contenido"
+            >
+              <Edit3 className="w-3.5 h-3.5 inline mr-1" />
+              <span className="hidden sm:inline">{isEditMode ? 'Editando' : 'Editar'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsDataModalOpen(true)}
+              className="p-1 text-stone-400 hover:text-stone-700 rounded transition cursor-pointer"
+              title="Respaldo / Gestión de datos"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN VIEW SWITCHER */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        {/* VIEW 1: HOME (Pure Licenciatura, Pure Description, Separated by Semesters) */}
+        {view === 'home' && (
+          <div className="space-y-12 animate-fadeIn max-w-3xl">
+            {/* Pure Institutional Header & Description */}
+            <div className="space-y-4">
+              <div className="text-xs font-semibold text-amber-800 uppercase tracking-wider font-mono">
+                Generación 2026–2030 · Escuela Normal Superior «Profesor Moisés Sáenz Garza»
+              </div>
+
+              <h1 className="text-3xl sm:text-5xl font-bold text-stone-900 font-display tracking-tight text-balance leading-tight">
+                Licenciatura en Enseñanza y Aprendizaje de la Física
+              </h1>
+
+              <p className="text-base sm:text-lg text-stone-600 leading-relaxed pt-2">
+                Diseñar y construir un entorno interactivo y lúdico basado en atracciones mecánicas y astronómicas, 
+                transformando conceptos abstractos de la física en experiencias de aprendizaje activo para la formación docente 
+                en la Escuela Normal Superior. La articulación de mecánica, álgebra, tecnologías y didáctica garantiza el 
+                desarrollo de competencias pedagógicas innovadoras para la enseñanza en educación básica.
+              </p>
+            </div>
+
+            {/* Separated by Semesters */}
+            <div className="space-y-4 pt-6 border-t border-stone-200">
+              <div className="flex items-center justify-between text-xs text-stone-500">
+                <span className="font-semibold text-stone-800 uppercase tracking-wider font-mono">
+                  Organización por Semestres
+                </span>
+                <span>Selecciona un semestre</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {curriculum.map((sem) => {
+                  const isFirst = sem.number === 1;
+
+                  return (
+                    <div
+                      key={sem.number}
+                      onClick={() => goToSemester(sem.number)}
+                      className={`group p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer bg-white ${
+                        isFirst
+                          ? 'border-amber-300 ring-1 ring-amber-200 hover:border-amber-500 hover:shadow-xs'
+                          : 'border-stone-200/80 hover:border-stone-400/80 hover:bg-stone-50/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-stone-400">
+                              0{sem.number}
+                            </span>
+                            <h2
+                              className={`text-base font-bold font-display ${
+                                isFirst
+                                  ? 'text-stone-900 group-hover:text-amber-900'
+                                  : 'text-stone-700 group-hover:text-stone-900'
+                              } transition-colors`}
+                            >
+                              {sem.name}
+                            </h2>
+                          </div>
+
+                          {isFirst ? (
+                            <span className="text-xs font-semibold text-amber-800 block pt-1">
+                              Parque Temático de la Física (5 Equipos + Tecnologías Emergentes)
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <ChevronRight className="w-4 h-4 text-stone-400 group-hover:translate-x-1 group-hover:text-stone-900 transition-all shrink-0" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW 2: SEMESTER (5 Projects + Tecnologías Emergentes for Semester 1; Blank for 2-8) */}
+        {view === 'semester' && (
+          <SemesterView
+            semester={currentSemester}
+            onBackToHome={goToHome}
+            onSelectModule={(mod) => goToModule(mod.id)}
+            onAddNewModule={() => setIsAddingModule(true)}
+            onEditModule={(mod) => setModuleToEdit(mod)}
+            onUpdateEmergentVideo={handleUpdateEmergentVideo}
+            isEditMode={isEditMode}
+          />
+        )}
+
+        {/* VIEW 3: PROJECT DETAIL */}
+        {view === 'module' && selectedModule && (
+          <ModuleDetailView
+            module={selectedModule}
+            semesterName={currentSemester.name}
+            allSemesterModules={currentSemester.modules}
+            onBackToSemester={() => setView('semester')}
+            onSelectModule={(mod) => setSelectedModuleId(mod.id)}
+            onEditModule={(mod) => setModuleToEdit(mod)}
+            isEditMode={isEditMode}
+          />
+        )}
+      </main>
+
+      {/* Minimalist Footer */}
+      <footer className="border-t border-stone-200 mt-auto py-8 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+          <div>
+            <strong className="text-stone-800 font-semibold block">
+              Escuela Normal Superior «Profesor Moisés Sáenz Garza»
+            </strong>
+            <p className="text-stone-500">
+              Generación 2026–2030 · Licenciatura en Enseñanza y Aprendizaje de la Física
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs text-stone-400">
+            <button onClick={goToHome} className="hover:text-stone-700 transition cursor-pointer">
+              Inicio
+            </button>
+            <span>·</span>
+            <button onClick={() => goToSemester(1)} className="hover:text-stone-700 transition cursor-pointer">
+              1° Semestre
+            </button>
+            <span>·</span>
+            <button onClick={() => goToModule('sem1-eq4', 1)} className="hover:text-stone-700 transition cursor-pointer">
+              Equipo 4: Reloj Ecuatorial
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      {/* Modals */}
+      {moduleToEdit && (
+        <EditModuleModal
+          module={moduleToEdit}
+          isOpen={!!moduleToEdit}
+          onClose={() => setModuleToEdit(null)}
+          onSave={handleUpdateModule}
+        />
+      )}
+
+      {isAddingModule && (
+        <AddModuleModal
+          semesterNumber={activeSemesterNum}
+          existingCount={currentSemester.modules.length}
+          isOpen={isAddingModule}
+          onClose={() => setIsAddingModule(false)}
+          onAdd={handleAddNewModule}
+        />
+      )}
+
+      {isDataModalOpen && (
+        <DataManagementModal
+          isOpen={isDataModalOpen}
+          onClose={() => setIsDataModalOpen(false)}
+          curriculum={curriculum}
+          onImport={handleImportCurriculum}
+          onReset={handleResetCurriculum}
+        />
+      )}
+    </div>
+  );
 }
