@@ -28,6 +28,8 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Build website
         run: npm run build
+      - name: Create blog route for GitHub Pages
+        run: mkdir -p dist/blog && cp dist/index.html dist/blog/index.html
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
