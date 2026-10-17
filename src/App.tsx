@@ -11,11 +11,7 @@ import { ModuleDetailView } from './components/ModuleDetailView';
 import { EditModuleModal } from './components/EditModuleModal';
 import { AddModuleModal } from './components/AddModuleModal';
 import { CalendarSection } from './components/CalendarSection';
-import { 
-  Compass, 
-  ChevronRight, 
-  Edit3 
-} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 export default function App() {
   // Curriculum state persisted in localStorage
@@ -166,7 +162,6 @@ export default function App() {
             <a href="/pagina-/?blog=1" className="hidden md:inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Blog LEAF ↗</a>
           </nav>
 
-          <div className="flex items-center gap-2"><a href="/pagina-/?blog=1" className="text-xs font-medium text-stone-600 hover:text-amber-800">Blog LEAF ↗</a></div>
         </div>
       </header>
 
