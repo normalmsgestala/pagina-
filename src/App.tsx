@@ -173,7 +173,7 @@ export default function App() {
               <Compass className="w-3.5 h-3.5 text-amber-600" />
               <span>Equipo 4: Reloj Ecuatorial</span>
             </button>
-            <a href="/pagina-/blog/" className="hidden md:inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Blog LEAF ↗</a>
+            <a href="/pagina-/?blog=1" className="hidden md:inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Blog LEAF ↗</a>
           </nav>
 
           {/* Quiet Actions */}
