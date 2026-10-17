@@ -1,0 +1,6 @@
+{
+  "name": "Generación 2026-2030 | Normal Superior Profr. Moisés Sáenz - Física",
+  "description": "Plataforma curricular y didáctica interactiva por semestres para la Licenciatura en Enseñanza y Aprendizaje de la Física, con módulos pedagógicos, historia y simulador del reloj ecuatorial.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
