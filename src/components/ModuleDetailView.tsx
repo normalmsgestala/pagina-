@@ -13,7 +13,8 @@ import {
   FileText, 
   Edit3, 
   Award,
-  Layers
+  Layers,
+  Upload
 } from 'lucide-react';
 
 interface ModuleDetailViewProps {
@@ -42,6 +43,29 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
   const [activeTab, setActiveTab] = useState<'simulator' | 'guia' | 'recursos'>(
     hasSimulator ? 'simulator' : 'guia'
   );
+  type BibliographyFile = { name: string; dataUrl: string; type: string; size: number };
+  const bibliographyKey = 'leaf-bibliography-' + module.id;
+  const [bibliographyFiles, setBibliographyFiles] = useState<BibliographyFile[]>(() => {
+    try { return JSON.parse(localStorage.getItem(bibliographyKey) || '[]'); } catch { return []; }
+  });
+  const [bibliographyMessage, setBibliographyMessage] = useState('');
+  useEffect(() => {
+    try { localStorage.setItem(bibliographyKey, JSON.stringify(bibliographyFiles)); }
+    catch { setBibliographyMessage('No se pudo guardar: el almacenamiento del navegador está lleno. Prueba con un archivo más pequeño.'); }
+  }, [bibliographyFiles, bibliographyKey]);
+  const handleBibliographyUpload = (files: FileList | null) => {
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      if (file.size > 3 * 1024 * 1024) { setBibliographyMessage('Cada archivo debe pesar menos de 3 MB.'); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const entry = { name: file.name, dataUrl: String(reader.result), type: file.type, size: file.size };
+        setBibliographyFiles(prev => [...prev, entry]);
+        setBibliographyMessage('Documento agregado en este navegador.');
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   useEffect(() => {
     const type = module.simulatorConfig?.type || 'none';
@@ -255,7 +279,7 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>Evidencias y Recursos</span>
+          <span>Bibliografía y Evidencias</span>
         </button>
       </div>
 
@@ -340,7 +364,20 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
         </div>
       )}
 
-      {/* TAB 3: RECURSOS Y EVIDENCIAS (EN BLANCO) */}
+      {/* TAB 3: BIBLIOGRAFÍA, DOCUMENTOS, RECURSOS Y EVIDENCIAS */}
+      {activeTab === 'recursos' && (
+        <div className="space-y-6 animate-fadeIn">
+          <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-7 space-y-4">
+            <div><h3 className="text-xl font-bold text-stone-900 font-display">Bibliografía y documentos de investigación</h3><p className="mt-1 text-sm text-stone-500">Sube PDFs, documentos o archivos de apoyo usados para investigar este proyecto.</p></div>
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 bg-stone-50 p-5 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+              <Upload className="h-4 w-4"/> Seleccionar documentos
+              <input type="file" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.rtf" className="hidden" onChange={e => { handleBibliographyUpload(e.target.files); e.currentTarget.value=''; }} />
+            </label>
+            {bibliographyMessage && <p className="text-xs text-amber-800">{bibliographyMessage}</p>}
+            {bibliographyFiles.length ? <div className="space-y-2">{bibliographyFiles.map((file,index)=><div key={file.name+index} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-200 p-3"><div className="flex-1"><p className="text-sm font-medium text-stone-800">{file.name}</p><p className="text-xs text-stone-400">{(file.size/1024).toFixed(0)} KB</p></div><a href={file.dataUrl} download={file.name} className="text-xs font-semibold text-amber-800 underline">Abrir / descargar</a><button onClick={()=>setBibliographyFiles(p=>p.filter((_,i)=>i!==index))} className="text-xs text-red-600 underline">Quitar</button></div>)}</div> : <p className="rounded-xl border border-dashed border-stone-200 p-5 text-center text-sm text-stone-400">Todavía no se han agregado documentos.</p>}
+            <p className="text-xs text-stone-400">Los archivos se guardan solo en este navegador por ahora; no se publican automáticamente para otros visitantes.</p>
+          </section>
+
       {activeTab === 'recursos' && (
         <div className="animate-fadeIn">
           {module.resources.length > 0 || module.notes.length > 0 ? (
@@ -372,6 +409,8 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
             </div>
           )}
         </div>
+      )}
+
       )}
 
       {/* Bottom Footer Stepper */}
