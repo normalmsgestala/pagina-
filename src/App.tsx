@@ -10,12 +10,11 @@ import { SemesterView } from './components/SemesterView';
 import { ModuleDetailView } from './components/ModuleDetailView';
 import { EditModuleModal } from './components/EditModuleModal';
 import { AddModuleModal } from './components/AddModuleModal';
-import { DataManagementModal } from './components/DataManagementModal';
+import { CalendarSection } from './components/CalendarSection';
 import { 
   Compass, 
   ChevronRight, 
-  Edit3, 
-  Download 
+  Edit3 
 } from 'lucide-react';
 
 export default function App() {
@@ -161,44 +160,13 @@ export default function App() {
                 view === 'semester' && activeSemesterNum === 1 ? 'text-amber-800 font-bold' : ''
               }`}
             >
-              1° Semestre (5 Equipos)
+              1° Semestre
             </button>
 
-            <button
-              onClick={() => goToModule('sem1-eq4', 1)}
-              className={`hidden sm:inline-flex items-center gap-1 hover:text-stone-900 transition-colors cursor-pointer ${
-                view === 'module' && selectedModuleId === 'sem1-eq4' ? 'text-amber-800 font-bold' : ''
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5 text-amber-600" />
-              <span>Equipo 4: Reloj Ecuatorial</span>
-            </button>
             <a href="/pagina-/?blog=1" className="hidden md:inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Blog LEAF ↗</a>
           </nav>
 
-          {/* Quiet Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                isEditMode
-                  ? 'bg-amber-600 text-white'
-                  : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
-              }`}
-              title="Modo para editar o actualizar contenido"
-            >
-              <Edit3 className="w-3.5 h-3.5 inline mr-1" />
-              <span className="hidden sm:inline">{isEditMode ? 'Editando' : 'Editar'}</span>
-            </button>
-
-            <button
-              onClick={() => setIsDataModalOpen(true)}
-              className="p-1 text-stone-400 hover:text-stone-700 rounded transition cursor-pointer"
-              title="Respaldo / Gestión de datos"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-          </div>
+          <div className="flex items-center gap-2"><a href="/pagina-/?blog=1" className="text-xs font-medium text-stone-600 hover:text-amber-800">Blog LEAF ↗</a></div>
         </div>
       </header>
 
@@ -267,7 +235,7 @@ export default function App() {
 
                           {isFirst ? (
                             <span className="text-xs font-semibold text-amber-800 block pt-1">
-                              Parque Temático de la Física (5 Equipos + Tecnologías Emergentes)
+                              Parque Temático de la Física
                             </span>
                           ) : null}
                         </div>
@@ -279,6 +247,7 @@ export default function App() {
                 })}
               </div>
             </div>
+            <CalendarSection />
           </div>
         )}
 
@@ -330,9 +299,7 @@ export default function App() {
               1° Semestre
             </button>
             <span>·</span>
-            <button onClick={() => goToModule('sem1-eq4', 1)} className="hover:text-stone-700 transition cursor-pointer">
-              Equipo 4: Reloj Ecuatorial
-            </button>
+
           </div>
         </div>
       </footer>
@@ -357,15 +324,7 @@ export default function App() {
         />
       )}
 
-      {isDataModalOpen && (
-        <DataManagementModal
-          isOpen={isDataModalOpen}
-          onClose={() => setIsDataModalOpen(false)}
-          curriculum={curriculum}
-          onImport={handleImportCurriculum}
-          onReset={handleResetCurriculum}
-        />
-      )}
+
     </div>
   );
 }
