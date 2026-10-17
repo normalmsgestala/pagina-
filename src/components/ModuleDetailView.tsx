@@ -378,39 +378,7 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
             <p className="text-xs text-stone-400">Los archivos se guardan solo en este navegador por ahora; no se publican automáticamente para otros visitantes.</p>
           </section>
 
-      {activeTab === 'recursos' && (
-        <div className="animate-fadeIn">
-          {module.resources.length > 0 || module.notes.length > 0 ? (
-            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/80 space-y-4">
-              {module.resources.map((res) => (
-                <div key={res.id} className="py-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-stone-900">{res.title}</span>
-                  <a
-                    href={res.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-amber-800 underline"
-                  >
-                    Abrir
-                  </a>
-                </div>
-              ))}
-              {module.notes.map((n, i) => (
-                <p key={i} className="text-xs text-stone-600">{n}</p>
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-center text-stone-400 space-y-2 border border-dashed border-stone-200 rounded-2xl bg-white/50">
-              <FileText className="w-6 h-6 text-stone-300 mx-auto" />
-              <p className="text-xs font-mono text-stone-400">Apartado en blanco</p>
-              <p className="text-xs text-stone-500">
-                Aún no se han integrado evidencias o recursos adicionales.
-              </p>
-            </div>
-          )}
         </div>
-      )}
-
       )}
 
       {/* Bottom Footer Stepper */}
