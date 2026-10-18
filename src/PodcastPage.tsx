@@ -2,9 +2,9 @@ import React from 'react';
 import { ArrowLeft, Headphones, PlayCircle, Mic2 } from 'lucide-react';
 
 const podcastSections = [
-  { title: 'Tecnologías Emergentes', subtitle: 'Herramientas digitales para explorar y enseñar física', description: 'Episodios sobre tecnologías emergentes, simuladores, análisis de datos y recursos digitales.', videoUrl: 'https://youtu.be/4Anb4UotavI', icon: PlayCircle },
-  { title: 'Lara E-learning', subtitle: 'Aprendizaje en entornos digitales', description: 'Contenidos sobre aprendizaje electrónico y experiencias formativas en línea.', videoUrl: 'https://youtu.be/xZKJpxZ66yQ', icon: Headphones },
-  { title: 'B-learning', subtitle: 'Aprendizaje combinado', description: 'Episodios sobre la integración de actividades presenciales y recursos digitales para enriquecer la enseñanza.', videoUrl: 'https://youtu.be/lpYOVKu_sdI', icon: Mic2 },
+  { title: 'Tecnologías Emergentes', subtitle: 'Herramientas digitales para explorar y enseñar física', description: 'Episodios sobre tecnologías emergentes, simuladores, análisis de datos y recursos digitales.', videoId: '4Anb4UotavI', videoUrl: 'https://youtu.be/4Anb4UotavI', icon: PlayCircle },
+  { title: 'Lara E-learning', subtitle: 'Aprendizaje en entornos digitales', description: 'Contenidos sobre aprendizaje electrónico y experiencias formativas en línea.', videoId: 'xZKJpxZ66yQ', videoUrl: 'https://youtu.be/xZKJpxZ66yQ', icon: Headphones },
+  { title: 'B-learning', subtitle: 'Aprendizaje combinado', description: 'Episodios sobre la integración de actividades presenciales y recursos digitales para enriquecer la enseñanza.', videoId: 'lpYOVKu_sdI', videoUrl: 'https://youtu.be/lpYOVKu_sdI', icon: Mic2 },
 ];
 
 export default function PodcastPage() {
@@ -28,7 +28,7 @@ export default function PodcastPage() {
             <h2 className="mt-2 font-serif text-2xl">{section.title}</h2>
             <p className="mt-3 text-sm font-semibold text-amber-900">{section.subtitle}</p>
             <p className="mt-4 flex-1 text-sm leading-6 text-stone-600">{section.description}</p>
-            <a href={section.videoUrl} target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center justify-center rounded-md bg-stone-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-amber-800">Ver video en YouTube ↗</a>
+            <div className="mt-6 overflow-hidden rounded-lg border border-stone-200 bg-black"><iframe className="aspect-video w-full" src={`https://www.youtube-nocookie.com/embed/${section.videoId}`} title={`Video: ${section.title}`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /></div><a href={section.videoUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center justify-center text-sm font-medium text-amber-900 underline underline-offset-4">Abrir en YouTube ↗</a>
           </article>;
         })}
       </div>
