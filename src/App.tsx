@@ -135,7 +135,7 @@ export default function App() {
             className="text-left cursor-pointer focus:outline-hidden"
           >
             <span className="text-sm sm:text-base font-bold text-stone-900 font-display hover:text-amber-900 transition-colors">
-              Normal Superior Profesor Moisés Sáenz
+              Campus Circus LEAF
             </span>
           </button>
 
