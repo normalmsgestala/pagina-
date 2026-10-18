@@ -27,8 +27,8 @@ export default function PodcastPage() {
             <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">Espacio 0{index + 1}</p>
             <h2 className="mt-2 font-serif text-2xl">{section.title}</h2>
             <p className="mt-3 text-sm font-semibold text-amber-900">{section.subtitle}</p>
-            <p className="mt-4 flex-1 text-sm leading-6 text-stone-600">{section.description}</p>
-            <div className="mt-6 overflow-hidden rounded-lg border border-stone-200 bg-black"><iframe className="aspect-video w-full" src={`https://www.youtube-nocookie.com/embed/${section.videoId}`} title={`Video: ${section.title}`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /></div><a href={section.videoUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center justify-center text-sm font-medium text-amber-900 underline underline-offset-4">Abrir en YouTube ↗</a>
+            <p className="mt-3 text-sm leading-6 text-stone-600">{section.description}</p>
+            <div className="mt-5 w-full overflow-hidden rounded-xl border border-stone-200 bg-black shadow-sm"><iframe className="block w-full aspect-video" src={`https://www.youtube.com/embed/${section.videoId}`} title={`Reproductor integrado: ${section.title}`} loading="eager" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /></div>
           </article>;
         })}
       </div>
