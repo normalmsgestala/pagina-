@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CircusProjectIntro } from './CircusProjectIntro';
 import { Semester, ModuleItem, EmergentTechTeamVideo } from '../types/curriculum';
 import { 
   ArrowLeft, 
@@ -66,6 +67,7 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
       ) : (
         <div className="space-y-8">
           {/* Project Integrator Header for 1st Semester */}
+          {isFirstSemester && <CircusProjectIntro />}
           <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-8 space-y-4 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
               <span className="font-mono font-bold text-amber-800 uppercase tracking-wider">
