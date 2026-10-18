@@ -71,7 +71,7 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
           <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-8 space-y-4 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
               <span className="font-mono font-bold text-amber-800 uppercase tracking-wider">
-                {semester.name} · Proyecto Integrador (50%)
+                {semester.name} · Proyecto Integrador
               </span>
               <div className="flex flex-wrap items-center gap-2 text-stone-500">
                 {semester.articulatedSubjects?.map((subj, i) => (
@@ -100,7 +100,7 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
           </div>
 
           {/* Section Switcher inside 1st Semester: 1. Proyectos del Parque Temático | 2. Tecnologías Emergentes */}
-          {false && isFirstSemester && (
+          {isFirstSemester && (
             <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 pb-3">
               <button
                 onClick={() => setActiveSection('proyectos')}
@@ -111,7 +111,7 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>Proyectos por Equipo (5 Simuladores + Guías en Blanco)</span>
+                <span>Proyectos por Equipo</span>
               </button>
 
               <button
