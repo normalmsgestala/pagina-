@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ModuleItem } from '../types/curriculum';
+import { CircusProjectIntro } from './CircusProjectIntro';
 import { RollerCoasterSimulator } from './simulators/RollerCoasterSimulator';
 import { FlyingChairsSimulator } from './simulators/FlyingChairsSimulator';
 import { SwingingShipSimulator } from './simulators/SwingingShipSimulator';
@@ -187,6 +188,8 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
           {module.title}
         </h1>
       </div>
+
+      {module.semesterNumber === 1 && <CircusProjectIntro />}
 
       {/* Requerimientos Oficiales Card (Propósitos por Materia + Evaluación y Rúbrica Corta) */}
       <div className="bg-white rounded-2xl border border-stone-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
