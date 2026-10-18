@@ -205,7 +205,7 @@ export default function App() {
                     <div
                       key={sem.number}
                       onClick={() => goToSemester(sem.number)}
-                      className={`group p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer bg-white ${
+                      className={`group circus-project-card p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer bg-white ${
                         isFirst
                           ? 'border-amber-300 ring-1 ring-amber-200 hover:border-amber-500 hover:shadow-xs'
                           : 'border-stone-200/80 hover:border-stone-400/80 hover:bg-stone-50/50'
