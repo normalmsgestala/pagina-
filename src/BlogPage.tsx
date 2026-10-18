@@ -16,7 +16,7 @@ export default function BlogPage(){
  return <div className="min-h-screen bg-stone-50 text-stone-900">
   <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5"><a href="/pagina-/" className="font-serif text-xl font-semibold tracking-wide">LEAF <span className="text-sm font-normal text-amber-800">2026—2030</span></a><a href="/pagina-/" className="flex items-center gap-2 text-sm text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver a los simuladores</a></div></header>
   <main className="mx-auto max-w-6xl px-5 py-12 sm:py-20">
-   <p className="mb-4 text-xs font-semibold uppercase tracking-[.2em] text-amber-800">Generación 2026—2030 · Blog estudiantil</p>
+   <p className="mb-4 text-xs font-semibold uppercase tracking-[.2em] text-amber-800">Generación 2026—2030 · Artículos estudiantiles</p>
    <h1 className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">Lo que vivimos.<br/><span className="italic text-stone-500">Lo que aprendemos.</span></h1>
    <p className="mt-6 max-w-2xl text-base leading-8 text-stone-600">Noticias, proyectos, recursos de física y experiencias de nuestra comunidad normalista.</p>
    <div className="mt-10 flex flex-col gap-4 border-y border-stone-200 py-4 sm:flex-row sm:items-center sm:justify-between">
