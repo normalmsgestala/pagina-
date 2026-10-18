@@ -15,3 +15,34 @@
   }
 }
 
+
+
+/* Campus Circus LEAF — identidad visual de feria científica */
+:root { --circus-red: #9f1d2d; --circus-cream: #fff8e8; --circus-gold: #f2bd45; }
+body { background-color: var(--circus-cream); }
+.circus-intro { background: var(--circus-cream); }
+.circus-marquee {
+  background-color: #8e1d2c;
+  background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 22px, transparent 22px 44px), radial-gradient(ellipse at 50% -40%, #d44a42 0%, #8e1d2c 65%);
+  position: relative;
+}
+.circus-marquee:after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 9px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: repeating-linear-gradient(90deg, #f2bd45 0 18px, #fff8e8 18px 36px);
+}
+.circus-project-card {
+  border-color: #e7c67b !important;
+  background-image: linear-gradient(145deg, #fffdf6, #fff6e2) !important;
+}
+.circus-ribbon {
+  background: #8e1d2c;
+  color: #fff8e8;
+  border: 2px solid #f2bd45;
+  box-shadow: 0 4px 0 rgba(83, 18, 28, .15);
+}
