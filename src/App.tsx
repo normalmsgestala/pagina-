@@ -177,7 +177,7 @@ export default function App() {
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-bold text-stone-900 font-display tracking-tight text-balance leading-tight">
-                Licenciatura en Enseñanza y Aprendizaje de la Física
+                Campus Circus LEAF: la física se vuelve una aventura
               </h1>
 
               <p className="text-base sm:text-lg text-stone-600 leading-relaxed pt-2">
