@@ -1,10 +1,11 @@
 import React from 'react';
-import { ArrowLeft, Headphones, PlayCircle, Mic2 } from 'lucide-react';
+import { ArrowLeft, Headphones, PlayCircle, Mic2, BarChart3 } from 'lucide-react';
 
 const podcastSections = [
   { title: 'Tecnologías Emergentes', subtitle: 'Herramientas digitales para explorar y enseñar física', description: 'Episodios sobre tecnologías emergentes, simuladores, análisis de datos y recursos digitales.', videoId: '4Anb4UotavI', videoUrl: 'https://youtu.be/4Anb4UotavI', icon: PlayCircle },
   { title: 'Lara E-learning', subtitle: 'Aprendizaje en entornos digitales', description: 'Contenidos sobre aprendizaje electrónico y experiencias formativas en línea.', videoId: 'xZKJpxZ66yQ', videoUrl: 'https://youtu.be/xZKJpxZ66yQ', icon: Headphones },
   { title: 'B-learning', subtitle: 'Aprendizaje combinado', description: 'Episodios sobre la integración de actividades presenciales y recursos digitales para enriquecer la enseñanza.', videoId: 'lpYOVKu_sdI', videoUrl: 'https://youtu.be/lpYOVKu_sdI', icon: Mic2 },
+  { title: 'Aprendizaje Adaptativo y Analítica Educativa', subtitle: 'Datos para personalizar el aprendizaje', description: 'Un espacio sobre el uso de datos educativos para comprender el progreso, adaptar experiencias y apoyar decisiones de enseñanza.', videoId: 'k5m2uqZP-0o', videoUrl: 'https://youtu.be/k5m2uqZP-0o', icon: BarChart3 },
 ];
 
 export default function PodcastPage() {
@@ -19,7 +20,7 @@ export default function PodcastPage() {
       <p className="mb-4 text-xs font-semibold uppercase tracking-[.2em] text-amber-800">Generación 2026—2030 · Audio y conversación</p>
       <h1 className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">Podcast LEAF.<br/><span className="italic text-stone-500">Ideas que se escuchan.</span></h1>
       <p className="mt-6 max-w-2xl text-base leading-8 text-stone-600">Un espacio para reunir episodios, entrevistas y recursos de aprendizaje en audio y video.</p>
-      <div className="mt-12 grid gap-6 md:grid-cols-3">
+      <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {podcastSections.map((section, index) => {
           const Icon = section.icon;
           return <article key={section.title} className="flex min-h-72 flex-col border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
