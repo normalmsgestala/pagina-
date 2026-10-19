@@ -6,8 +6,6 @@ import {
   Compass, 
   Edit3, 
   ChevronRight,
-  Video,
-  Layers
 } from 'lucide-react';
 
 interface SemesterViewProps {
@@ -28,7 +26,6 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
   onUpdateEmergentVideo,
   isEditMode
 }) => {
-  const [activeSection, setActiveSection] = useState<'proyectos' | 'tecnologias'>('proyectos');
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [tempVideoUrl, setTempVideoUrl] = useState<string>('');
   const [tempVideoTitle, setTempVideoTitle] = useState<string>('');
@@ -99,37 +96,8 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
             )}
           </div>
 
-          {/* Section Switcher inside 1st Semester: 1. Proyectos del Parque Temático | 2. Tecnologías Emergentes */}
-          {isFirstSemester && (
-            <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 pb-3">
-              <button
-                onClick={() => setActiveSection('proyectos')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  activeSection === 'proyectos'
-                    ? 'bg-stone-900 text-white shadow-2xs'
-                    : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Proyectos por Equipo</span>
-              </button>
-
-              <button
-                onClick={() => setActiveSection('tecnologias')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  activeSection === 'tecnologias'
-                    ? 'bg-amber-600 text-white shadow-2xs'
-                    : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
-                }`}
-              >
-                <Video className="w-3.5 h-3.5" />
-                <span>Tecnologías Emergentes (Videos por Equipos)</span>
-              </button>
-            </div>
-          )}
-
           {/* SECTION A: THE 5 PROJECTS OF PARQUE TEMÁTICO */}
-          {activeSection === 'proyectos' && (
+          {(
             <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-bold text-stone-400 uppercase tracking-wider font-mono">
