@@ -1,33 +1,97 @@
-import { EmergingTechSection } from './components/EmergingTechSection';
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Search, BookOpen } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search, BookOpen, X, CalendarDays, UserRound } from 'lucide-react';
 
-const posts = [
- {category:'Comunidad',title:'Un nuevo capítulo comienza aquí',excerpt:'Un espacio para compartir ideas, experiencias y todo lo que hace única a nuestra generación 2026–2030.',date:'EDICIÓN 2026–2030',image:'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85'},
- {category:'Física',title:'La física también se aprende experimentando',excerpt:'Simuladores, preguntas y actividades que nos ayudan a llevar los conceptos del salón a experiencias interactivas.',date:'RECURSOS DE APRENDIZAJE',image:'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=900&q=80'},
- {category:'Vida estudiantil',title:'Ideas para organizar tu semestre',excerpt:'Estrategias sencillas para planear el estudio, trabajar en equipo y aprovechar mejor cada clase.',date:'GUÍA ESTUDIANTIL',image:'https://images.unsplash.com/photo-1455390582262-044cdae0bbc7?auto=format&fit=crop&w=900&q=80'},
- {category:'Comunidad',title:'Las historias que también merecen contarse',excerpt:'Proyectos, recomendaciones, aprendizajes y voces de estudiantes: este espacio se construye entre todos.',date:'PARTICIPA',image:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80'},
-];
-export default function BlogPage(){
- const [query,setQuery]=useState('');
- const [category,setCategory]=useState('Todo');
- const [active,setActive]=useState<(typeof posts)[number]|null>(null);
- const filtered=useMemo(()=>posts.filter(p=>(category==='Todo'||p.category===category)&&(p.title+' '+p.excerpt+' '+p.category).toLowerCase().includes(query.toLowerCase())),[query,category]);
- return <div className="min-h-screen bg-stone-50 text-stone-900">
-  <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5"><a href="/pagina-/" className="font-serif text-xl font-semibold tracking-wide">LEAF <span className="text-sm font-normal text-amber-800">2026—2030</span></a><a href="/pagina-/" className="flex items-center gap-2 text-sm text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver a los simuladores</a></div></header>
-  <main className="mx-auto max-w-6xl px-5 py-12 sm:py-20">
-   <p className="mb-4 text-xs font-semibold uppercase tracking-[.2em] text-amber-800">Generación 2026—2030 · Artículos estudiantiles</p>
-   <h1 className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">Lo que vivimos.<br/><span className="italic text-stone-500">Lo que aprendemos.</span></h1>
-   <p className="mt-6 max-w-2xl text-base leading-8 text-stone-600">Noticias, proyectos, recursos de física y experiencias de nuestra comunidad normalista.</p>
-   <div className="mt-10 flex flex-col gap-4 border-y border-stone-200 py-4 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex flex-wrap gap-2">{['Todo','Comunidad','Física','Vida estudiantil'].map(c=><button key={c} onClick={()=>setCategory(c)} className={category===c?'rounded-full bg-stone-900 px-4 py-2 text-sm text-white':'rounded-full border border-stone-300 px-4 py-2 text-sm text-stone-600 hover:border-stone-800'}>{c}</button>)}</div>
-    <label className="flex items-center gap-2 border-b border-stone-300 py-2 text-stone-500"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar artículos..." className="w-full bg-transparent text-sm outline-none sm:w-48"/></label>
-   </div>
-   <div className="mt-8 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">{filtered.map((p,i)=><button key={p.title} onClick={()=>setActive(p)} className="group overflow-hidden text-left"><div className="aspect-[4/3] overflow-hidden bg-stone-200"><img src={p.image} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105"/></div><div className="py-4"><p className="text-xs uppercase tracking-widest text-amber-800">{p.category} · {p.date}</p><h2 className="mt-3 font-serif text-2xl leading-snug">{p.title}</h2><p className="mt-3 text-sm leading-6 text-stone-600">{p.excerpt}</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">Leer historia <ArrowRight size={15}/></span></div></button>)}</div>
-   {filtered.length===0&&<p className="py-12 text-stone-600">No encontramos artículos con esa búsqueda.</p>}
-   <EmergingTechSection />
-   <section className="mt-16 flex flex-col gap-4 bg-stone-900 p-7 text-white sm:flex-row sm:items-center sm:justify-between sm:p-10"><div><p className="text-xs uppercase tracking-widest text-stone-300">¿Tienes una idea?</p><h2 className="mt-2 font-serif text-3xl">Este espacio también es tuyo.</h2></div><a href="https://github.com/normalmsgestala/pagina-/issues" className="inline-flex items-center gap-2 text-sm underline underline-offset-4">Propón una historia <ArrowRight size={16}/></a></section>
-  </main><footer className="border-t border-stone-200 px-5 py-6 text-center text-xs tracking-widest text-stone-500">LEAF 2026—2030 · HECHO EN COMUNIDAD</footer>
-  {active&&<div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4" onClick={()=>setActive(null)}><article className="my-8 w-full max-w-2xl bg-stone-50 p-6 sm:p-10" onClick={e=>e.stopPropagation()}><button className="mb-5 text-sm underline" onClick={()=>setActive(null)}>Cerrar artículo</button><img src={active.image} alt="" className="mb-6 max-h-72 w-full object-cover"/><p className="text-xs uppercase tracking-widest text-amber-800">{active.category} · {active.date}</p><h2 className="mt-3 font-serif text-3xl sm:text-4xl">{active.title}</h2><p className="mt-5 leading-8 text-stone-600">{active.excerpt}</p><p className="mt-4 leading-8 text-stone-600">Este espacio comparte experiencias, ideas y recursos útiles para nuestra generación. Las publicaciones se irán construyendo con las aportaciones de estudiantes y docentes.</p></article></div>}
- </div>
+const article = {
+  id: '001',
+  category: 'Investigación educativa',
+  title: 'El bienestar socioemocional docente en Nuevo León: desafíos institucionales para una educación más humana',
+  excerpt: 'Una revisión documental exploratoria sobre el bienestar del profesorado, las condiciones institucionales y la responsabilidad compartida de construir escuelas más humanas.',
+  date: '18 de octubre de 2026',
+  image: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1600&q=85',
+  author: 'Carlos Ismael Estala Coronado',
+  keywords: 'bienestar docente; educación socioemocional; salud mental; condiciones laborales; Nuevo León',
+  abstract: 'Este artículo analiza los desafíos del bienestar socioemocional del profesorado en Nuevo León desde una perspectiva institucional y sistémica. Se propone un enfoque interpretativo-crítico y humanista para examinar cómo las condiciones organizacionales, las demandas emocionales y los recursos de apoyo se relacionan en la experiencia docente. La estrategia consiste en una revisión documental exploratoria y un análisis temático de fuentes académicas. La discusión preliminar aborda el agotamiento profesional, el trabajo emocional, la formación socioemocional, las redes de apoyo y el liderazgo escolar. La literatura consultada destaca la relevancia del bienestar docente, aunque la evidencia local disponible es limitada y no permite generalizar resultados a todo el estado. Se plantea que el bienestar no debe tratarse únicamente como una competencia individual, sino como una responsabilidad compartida entre autoridades, equipos directivos y comunidades escolares. Las recomendaciones iniciales incluyen acceso confidencial a apoyo psicológico, revisión de tareas administrativas, colaboración entre pares y formación de liderazgos sensibles. El texto es una revisión documental exploratoria en desarrollo; las afirmaciones sobre condiciones actuales específicas de Nuevo León requieren verificación adicional.',
+  sections: [
+    { heading: '1. Introducción', paragraphs: [
+      'La educación emocional busca desarrollar conciencia y regulación emocional, autogestión y habilidades interpersonales, y requiere programas fundamentados y profesorado preparado (Bisquerra Alzina, 2003). Esta atención a las emociones plantea una pregunta institucional: ¿qué condiciones necesita el profesorado para acompañar el bienestar de sus estudiantes sin que su propia salud emocional quede relegada?',
+      'El problema que orienta este artículo es la posible individualización del bienestar docente. Cuando el agotamiento se explica solo como falta de resiliencia o de habilidades personales, pueden quedar fuera del análisis factores organizacionales como la carga administrativa, la autonomía profesional, la seguridad, los equipos de apoyo y el liderazgo escolar.',
+      'El objetivo es analizar los desafíos del bienestar socioemocional del profesorado en Nuevo León desde una perspectiva institucional y sistémica. Se trata de una revisión documental y un análisis crítico, no de una investigación empírica original.'
+    ]},
+    { heading: '2. Marco epistemológico', paragraphs: [
+      'La perspectiva interpretativo-crítica permite examinar cómo se construyen las expectativas sobre el papel emocional del profesorado y cómo se relacionan con las condiciones institucionales. La perspectiva sistémica entiende el bienestar como un fenómeno vinculado con las interacciones entre docentes, equipos escolares, liderazgo, políticas educativas y entorno comunitario.',
+      'La perspectiva humanista sitúa la dignidad, la agencia profesional y las necesidades de las personas en el centro del análisis. Desde esta combinación, la educación socioemocional no puede reducirse a técnicas individuales: también requiere examinar las condiciones que permiten o dificultan su práctica sostenible.',
+      'Las categorías iniciales de análisis son: demandas emocionales y condiciones laborales; agotamiento profesional y fatiga por compasión; autonomía docente y carga administrativa; apoyo psicológico y colaboración entre pares; liderazgo escolar y responsabilidad institucional; y oferta formativa y políticas públicas de bienestar.'
+    ]},
+    { heading: '3. Metodología', paragraphs: [
+      'Se plantea una revisión documental exploratoria de fuentes académicas, normativas e institucionales relacionadas con el bienestar socioemocional docente en Nuevo León y México, complementada con literatura internacional pertinente. La selección final debe verificarse consultando los documentos originales y registrando autoría, fecha, título, publicación y enlace o DOI cuando corresponda.',
+      'Los criterios de inclusión previstos consideran la relación directa con bienestar docente, salud ocupacional, educación socioemocional o condiciones institucionales; la identificación bibliográfica suficiente; y la aportación de evidencia, conceptos o contexto para alguna categoría analítica.',
+      'El procedimiento consiste en localizar y verificar documentos, registrar sus datos bibliográficos, extraer fragmentos relevantes sin separarlos de su contexto, codificar contenidos en categorías temáticas, contrastar convergencias y vacíos, y distinguir evidencia documental, interpretación del autor y recomendaciones. La descripción reproducible de la búsqueda —bases de datos, términos, periodo, fechas de consulta y número final de documentos— sigue pendiente.'
+    ]},
+    { heading: '4. Resultados preliminares de la síntesis documental', paragraphs: [
+      'Los ejes que siguen son resultados preliminares derivados del documento de trabajo y están sujetos a verificación de fuentes; no son resultados de una investigación de campo realizada para este artículo.',
+      'Desajuste entre demandas emocionales y recursos institucionales. El documento de trabajo plantea que el profesorado asume responsabilidades de mediación de conflictos, inclusión, convivencia y acompañamiento emocional. La revisión debe precisar qué estudios respaldan cada aspecto y hasta dónde pueden generalizarse.',
+      'Condiciones de trabajo y agotamiento. Sieglin y Ramos Tovar (2007) estudiaron síntomas de depresión y ansiedad y su relación con factores laborales en una muestra no representativa de docentes de escuelas públicas del área metropolitana de Monterrey. Es un antecedente local relevante, pero no permite estimar la prevalencia actual en todo Nuevo León. Una revisión sistemática de Kariou et al. (2021) encontró asociaciones entre ciertas estrategias de trabajo emocional —en particular, la actuación superficial— y burnout docente, con resultados mixtos para otras estrategias.',
+      'Formación socioemocional: oportunidad y límite. Los cursos y diplomados pueden contribuir al desarrollo profesional, pero no sustituyen las condiciones organizacionales necesarias para sostener el bienestar. La vigencia, alcance y características de programas específicos deben comprobarse antes de afirmarlos.',
+      'Redes de apoyo y liderazgo escolar. La colaboración entre colegas, el apoyo psicológico accesible y un liderazgo sensible se proponen como líneas plausibles de acción. Su eficacia concreta para Nuevo León requiere estudios locales y evaluación de programas.'
+    ]},
+    { heading: '5. Discusión y conclusiones', paragraphs: [
+      'La discusión central consiste en evitar que el bienestar socioemocional se formule únicamente como responsabilidad individual del docente. La literatura aborda tanto el desarrollo de competencias emocionales y la preparación del profesorado como la relación entre condiciones laborales y malestar psicológico. Los resultados deben interpretarse según el contexto y las limitaciones de cada estudio.',
+      'Como líneas de acción institucional se propone: desarrollar mecanismos accesibles y confidenciales de orientación y apoyo psicológico; revisar tareas administrativas y priorizar actividades vinculadas con la enseñanza; reservar tiempos para comunidades de práctica y acompañamiento entre pares; y fortalecer la formación de directivos y supervisores en liderazgo sensible, manejo de conflictos y protección de la autonomía profesional.',
+      'En conclusión provisional, el bienestar socioemocional docente debe examinarse como una responsabilidad compartida y una condición de sostenibilidad educativa, no como una competencia aislada que cada profesor deba resolver por cuenta propia. Una política institucional coherente necesita articular formación, apoyo profesional, organización del trabajo, colaboración y liderazgo. La conclusión definitiva requiere completar la verificación de fuentes y delimitar el alcance de la evidencia documental.'
+    ]}
+  ],
+  references: [
+    'Bisquerra Alzina, R. (2003). Educación emocional y competencias básicas para la vida. Revista de Investigación Educativa, 21(1), 7–43. https://revistas.um.es/rie/article/view/99071',
+    'García Pérez, J. L., & Garza Ruíz, B. A. (2022). Educación socioemocional y formación docente. Revista RELEP: Educación y Pedagogía en Latinoamérica, 4(2), 32–45. https://doi.org/10.46990/relep.2022.4.2.606',
+    'Hascher, T., & Waber, J. (2021). Teacher well-being: A systematic review of the research literature from the year 2000–2019. Educational Research Review, 34, Article 100411. https://doi.org/10.1016/j.edurev.2021.100411',
+    'Kariou, A., Koutsimani, P., Montgomery, A., & Lainidi, O. (2021). Emotional labor and burnout among teachers: A systematic review. International Journal of Environmental Research and Public Health, 18(23), Article 12760. https://doi.org/10.3390/ijerph182312760',
+    'Sieglin, V., & Ramos Tovar, M. E. (2007). Estrés laboral y depresión entre maestros del área metropolitana de Monterrey. Revista Mexicana de Sociología, 69(3), 517–551. https://www.scielo.org.mx/scielo.php?pid=S0188-25032007000300005&script=sci_arttext',
+    'Yin, H., Huang, S., & Chen, G. (2019). The relationships between teachers’ emotional labor and their burnout and satisfaction: A meta-analytic review. Educational Research Review, 28, Article 100283. https://doi.org/10.1016/j.edurev.2019.100283'
+  ]
+};
+
+export default function BlogPage() {
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState(false);
+  const visible = useMemo(() => (article.title + ' ' + article.excerpt + ' ' + article.keywords).toLowerCase().includes(query.toLowerCase()), [query]);
+
+  return <div className="min-h-screen bg-stone-50 text-stone-900">
+    <header className="border-b border-stone-200 bg-white">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 gap-4">
+        <a href="/pagina-/" className="font-serif text-xl font-semibold tracking-wide">LEAF <span className="text-sm font-normal text-amber-800">2026—2030</span></a>
+        <a href="/pagina-/" className="flex items-center gap-2 text-sm text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver al Campus</a>
+      </div>
+    </header>
+    <main className="mx-auto max-w-6xl px-5 py-12 sm:py-20">
+      <p className="mb-4 text-xs font-semibold uppercase tracking-[.2em] text-amber-800">LEAF 2026—2030 · Publicaciones de investigación</p>
+      <h1 className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">Artículos científicos.<br/><span className="italic text-stone-500">Ideas que dejan huella.</span></h1>
+      <p className="mt-6 max-w-2xl text-base leading-8 text-stone-600">Un espacio para consultar investigaciones, revisiones documentales y reflexiones académicas de la comunidad.</p>
+      <label className="mt-9 flex max-w-md items-center gap-2 border-b border-stone-300 py-3 text-stone-500"><Search size={16}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar artículos..." className="w-full bg-transparent text-sm outline-none"/></label>
+      {visible ? <button onClick={() => setActive(true)} className="group mt-8 grid w-full overflow-hidden rounded-2xl border border-stone-200 bg-white text-left shadow-sm transition hover:shadow-md md:grid-cols-[.9fr_1.1fr]">
+        <div className="relative min-h-56 overflow-hidden bg-stone-200 sm:min-h-72"><img src={article.image} alt="Docente y estudiantes en un entorno educativo" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"/><span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-amber-900">ARTÍCULO {article.id}</span></div>
+        <div className="flex flex-col justify-center p-6 sm:p-10"><p className="text-xs font-semibold uppercase tracking-widest text-amber-800">{article.category} · {article.date}</p><h2 className="mt-4 font-serif text-2xl leading-snug sm:text-3xl">{article.id}. {article.title}</h2><p className="mt-4 text-sm leading-7 text-stone-600">{article.excerpt}</p><p className="mt-5 flex items-center gap-2 text-sm text-stone-500"><UserRound size={15}/> {article.author}</p><span className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-stone-900">Abrir artículo completo <ArrowRight size={16}/></span></div>
+      </button> : <p className="py-12 text-stone-600">No encontramos artículos con esa búsqueda.</p>}
+      <p className="mt-6 text-xs leading-6 text-stone-500">Nota editorial: el manuscrito se presenta como revisión documental exploratoria en desarrollo. Algunas afirmaciones y la estrategia de búsqueda requieren verificación adicional; no se presenta como estudio empírico.</p>
+      <section className="mt-16 border-t border-stone-200 pt-8"><p className="text-xs uppercase tracking-widest text-stone-500">Próximamente</p><h2 className="mt-2 font-serif text-2xl">Más artículos se incorporarán aquí.</h2><p className="mt-3 max-w-xl text-sm leading-7 text-stone-600">Cada publicación tendrá su propia ficha y una ventana de lectura con resumen, secciones y bibliografía.</p></section>
+    </main>
+    <footer className="border-t border-stone-200 px-5 py-6 text-center text-xs tracking-widest text-stone-500">LEAF 2026—2030 · ARTÍCULOS</footer>
+    {active && <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-stone-950/70 p-2 sm:p-6" role="dialog" aria-modal="true" aria-label={article.title} onClick={() => setActive(false)}>
+      <article className="my-3 w-full max-w-4xl overflow-hidden rounded-xl bg-stone-50 shadow-2xl sm:my-8" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-stone-200 bg-stone-50/95 px-5 py-3 backdrop-blur"><span className="text-xs font-semibold uppercase tracking-widest text-amber-800">Artículo {article.id} · Lectura completa</span><button onClick={() => setActive(false)} aria-label="Cerrar artículo" className="inline-flex items-center gap-2 rounded-full border border-stone-300 px-3 py-2 text-sm hover:bg-white"><X size={16}/> Cerrar</button></div>
+        <img src={article.image} alt="Docentes y estudiantes en un espacio educativo" className="h-52 w-full object-cover sm:h-80"/>
+        <div className="mx-auto max-w-3xl px-5 py-8 sm:px-10 sm:py-12">
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-amber-800">Investigación educativa · {article.date}</p>
+          <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-5xl">{article.id}. {article.title}</h1>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-stone-600"><span className="inline-flex items-center gap-2"><UserRound size={15}/> {article.author}</span><span className="inline-flex items-center gap-2"><BookOpen size={15}/> Revisión documental exploratoria</span></div>
+          <div className="mt-8 rounded-xl border border-stone-200 bg-white p-5 sm:p-7"><h2 className="font-serif text-2xl">Resumen</h2><p className="mt-3 text-sm leading-7 text-stone-700">{article.abstract}</p><p className="mt-4 text-sm leading-7"><strong>Palabras clave:</strong> {article.keywords}</p></div>
+          <div className="prose prose-stone mt-8 max-w-none">
+            {article.sections.map(section => <section key={section.heading} className="mb-9"><h2 className="font-serif text-2xl sm:text-3xl">{section.heading}</h2>{section.paragraphs.map((paragraph, i) => <p key={i} className="mt-4 text-[15px] leading-8 text-stone-700">{paragraph}</p>)}</section>)}
+            <section className="mt-10 border-t border-stone-200 pt-8"><h2 className="font-serif text-2xl sm:text-3xl">Referencias</h2><ol className="mt-5 list-decimal space-y-4 pl-5">{article.references.map(ref => <li key={ref} className="break-words text-sm leading-7 text-stone-700">{ref}</li>)}</ol></section>
+          </div>
+          <div className="mt-10 flex items-start gap-3 rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-950"><CalendarDays size={18} className="mt-1 shrink-0"/><p><strong>Nota de alcance:</strong> versión de trabajo publicada para consulta. La búsqueda documental y la verificación completa de fuentes requieren ampliación antes de presentar el texto como revisión exhaustiva.</p></div>
+        </div>
+        <div className="border-t border-stone-200 px-5 py-5 text-center"><button onClick={() => setActive(false)} className="rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white hover:bg-amber-900">Volver a artículos</button></div>
+      </article>
+    </div>}
+  </div>;
 }
