@@ -34,7 +34,8 @@ export default function PodcastPage() {
             <h2 className="mt-2 font-serif text-2xl">{section.title}</h2>
             <p className="mt-3 text-sm font-semibold text-amber-900">{section.subtitle}</p>
             <p className="mt-3 text-sm leading-6 text-stone-600">{section.description}</p>
-            <div className="mt-5 w-full overflow-hidden rounded-xl border border-stone-200 bg-black shadow-sm"><iframe className="block w-full aspect-video" src={`https://www.youtube.com/embed/${section.videoId}`} title={`Reproductor integrado: ${section.title}`} loading="eager" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /></div>
+            <div className="mt-5 w-full overflow-hidden rounded-xl border border-stone-200 bg-black shadow-sm"><iframe className="block w-full aspect-video" src={`https://www.youtube.com/embed/${section.videoId}`} title={`Reproductor integrado: ${section.title}`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /></div>
+            <a href={section.videoUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:border-amber-700 hover:text-amber-900"><PlayCircle size={17}/> Ver video en YouTube <span aria-hidden="true">↗</span></a>
           </article>;
         })}
       </div>
