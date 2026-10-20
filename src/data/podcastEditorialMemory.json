@@ -1,0 +1,65 @@
+{
+  "project": "Campus Circus LEAF · Podcast",
+  "purpose": "Memoria de continuidad para planear, producir y publicar episodios audiovisuales y conservar sus enlaces.",
+  "nextEpisodeNumber": "05",
+  "numbering": "Numerar episodios consecutivamente con dos dígitos: 01, 02, 03...",
+  "workflow": [
+    "Definir tema, propósito didáctico y público",
+    "Redactar escaleta o guion con apertura, desarrollo, ejemplo educativo y cierre",
+    "Verificar datos y fuentes cuando el episodio incluya afirmaciones académicas",
+    "Preparar escenas, imágenes y prompts manteniendo continuidad visual de personajes y escenarios",
+    "Editar y publicar el video o audio",
+    "Guardar URL final, título, descripción, fecha y créditos",
+    "Actualizar src/PodcastPage.tsx y esta memoria editorial"
+  ],
+  "publicationStandards": [
+    "No inventar enlaces ni marcar un episodio como publicado hasta verificar su URL",
+    "Distinguir guion, episodio en producción y episodio publicado",
+    "Usar lenguaje claro y accesible, sin perder precisión conceptual",
+    "Incluir fuentes cuando se comuniquen afirmaciones científicas o educativas",
+    "Mantener coherencia visual y narrativa entre escenas de un mismo episodio"
+  ],
+  "publishedVideoCards": [
+    {
+      "title": "Tecnologías Emergentes",
+      "url": "https://youtu.be/4Anb4UotavI",
+      "status": "Enlace integrado en la página Podcast"
+    },
+    {
+      "title": "Lara E-learning",
+      "url": "https://youtu.be/xZKJpxZ66yQ",
+      "status": "Enlace integrado en la página Podcast"
+    },
+    {
+      "title": "B-learning",
+      "url": "https://youtu.be/lpYOVKu_sdI",
+      "status": "Enlace integrado en la página Podcast"
+    },
+    {
+      "title": "Aprendizaje Adaptativo y Analítica Educativa",
+      "url": "https://youtu.be/k5m2uqZP-0o",
+      "status": "Enlace integrado en la página Podcast"
+    }
+  ],
+  "creationTemplate": {
+    "episodeNumber": "",
+    "workingTitle": "",
+    "purpose": "",
+    "audience": "",
+    "script": "",
+    "sceneContinuityNotes": "",
+    "sources": [],
+    "status": "idea",
+    "finalUrl": "",
+    "publicationDate": "",
+    "credits": ""
+  },
+  "siteIntegration": {
+    "repository": "normalmsgestala/pagina-",
+    "branch": "main",
+    "page": "src/PodcastPage.tsx",
+    "projectPage": "src/components/SemesterView.tsx",
+    "homePage": "src/App.tsx",
+    "projectOrganization": "Semestres y fichas de proyectos; mantener los equipos y sus proyectos. La sección de videos de Tecnologías Emergentes por equipos se retiró de la vista del primer semestre."
+  }
+}
