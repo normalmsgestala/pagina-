@@ -1,0 +1,75 @@
+{
+  "project": "Campus Circus LEAF · Artículos",
+  "purpose": "Catálogo editorial del sitio y memoria de continuidad para crear, revisar y publicar artículos consecutivos.",
+  "sequence": {
+    "nextArticleNumber": "002",
+    "format": "Tres dígitos consecutivos: 001, 002, 003...",
+    "rule": "Nunca reutilizar un número ya asignado. Antes de publicar, revisar este archivo y el catálogo visible del sitio."
+  },
+  "publicationPolicy": {
+    "destination": "Sección Artículos del sitio Campus Circus LEAF; no se prepara para envío a revista salvo solicitud expresa.",
+    "language": "Español académico claro.",
+    "evidence": "Las afirmaciones académicas deben sustentarse con fuentes específicas verificables. Distinguir hallazgos publicados, interpretación y aspectos provisionales.",
+    "methodology": "En revisiones documentales, describir bases o repositorios consultados, términos de búsqueda, fechas, criterios de inclusión/exclusión, proceso de selección y método de análisis. No afirmar que una búsqueda se realizó si no se documentó.",
+    "references": "Verificar que cada referencia exista y que autoría, fecha, título, publicación y DOI/URL correspondan al documento original. Mantener estilo bibliográfico consistente, preferentemente APA 7.",
+    "transparency": "Señalar límites, vacíos de evidencia y afirmaciones locales que requieran verificación. No presentar una revisión exploratoria como investigación empírica.",
+    "reviewChecklist": [
+      "Título y número consecutivo",
+      "Resumen y palabras clave",
+      "Problema, objetivo y marco conceptual",
+      "Metodología de búsqueda documental reproducible cuando corresponda",
+      "Desarrollo organizado por secciones",
+      "Afirmaciones respaldadas por fuentes específicas",
+      "Discusión, límites y conclusiones congruentes con la evidencia",
+      "Referencias comprobadas y enlaces funcionales",
+      "Revisión final de estilo, fechas y metadatos"
+    ]
+  },
+  "articles": [
+    {
+      "id": "001",
+      "title": "El bienestar socioemocional docente en Nuevo León: desafíos institucionales para una educación más humana",
+      "category": "Investigación educativa",
+      "date": "2026-10-18",
+      "status": "Publicado en la sección Artículos del sitio",
+      "methodology": "Revisión documental exploratoria y análisis temático; las afirmaciones específicas sobre condiciones actuales en Nuevo León deben quedar diferenciadas y verificadas con fuentes directas.",
+      "continuityNotes": [
+        "El bienestar docente se aborda como responsabilidad institucional y sistémica, no únicamente como competencia individual.",
+        "Temas centrales: demandas emocionales y condiciones laborales; agotamiento profesional; autonomía y carga administrativa; apoyo psicológico y colaboración entre pares; liderazgo escolar; formación y políticas de bienestar.",
+        "Las afirmaciones marcadas como provisionales requieren fuentes específicas y verificación.",
+        "Completar la metodología de búsqueda documental con fuentes, términos, periodo de búsqueda, criterios de selección y proceso de análisis realmente utilizados."
+      ]
+    }
+  ],
+  "siteIntegration": {
+    "repository": "normalmsgestala/pagina-",
+    "branch": "main",
+    "articlesPage": "src/BlogPage.tsx",
+    "podcastPage": "src/PodcastPage.tsx",
+    "homePage": "src/App.tsx",
+    "podcastVideos": [
+      {
+        "title": "Tecnologías Emergentes",
+        "url": "https://youtu.be/4Anb4UotavI"
+      },
+      {
+        "title": "Lara E-learning",
+        "url": "https://youtu.be/xZKJpxZ66yQ"
+      },
+      {
+        "title": "B-learning",
+        "url": "https://youtu.be/lpYOVKu_sdI"
+      },
+      {
+        "title": "Aprendizaje Adaptativo y Analítica Educativa",
+        "url": "https://youtu.be/k5m2uqZP-0o"
+      }
+    ],
+    "notes": [
+      "Los cuatro videos del Podcast están integrados en src/PodcastPage.tsx.",
+      "La sección Artículos contiene el artículo 001 en src/BlogPage.tsx.",
+      "La sección Tecnologías Emergentes por equipos se retiró de la vista del primer semestre; conservar los equipos y las demás secciones.",
+      "No guardar credenciales, contraseñas ni datos personales sensibles en este archivo."
+    ]
+  }
+}
