@@ -20,6 +20,11 @@ export default function PodcastPage() {
       <p className="mb-4 text-xs font-semibold uppercase tracking-[.2em] text-amber-800">Generación 2026—2030 · Audio y conversación</p>
       <h1 className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">Podcast LEAF.<br/><span className="italic text-stone-500">Ideas que se escuchan.</span></h1>
       <p className="mt-6 max-w-2xl text-base leading-8 text-stone-600">Un espacio para reunir episodios, entrevistas y recursos de aprendizaje en audio y video.</p>
+      <section className="mt-10 grid gap-4 border-y border-stone-200 py-6 sm:grid-cols-3">
+        <div><p className="text-xs font-semibold uppercase tracking-widest text-amber-800">01 · Planeación</p><h2 className="mt-2 font-serif text-xl">Idea y guion</h2><p className="mt-2 text-sm leading-6 text-stone-600">Cada episodio parte de un propósito didáctico, público definido y una escaleta con apertura, desarrollo, ejemplo y cierre.</p></div>
+        <div><p className="text-xs font-semibold uppercase tracking-widest text-amber-800">02 · Producción</p><h2 className="mt-2 font-serif text-xl">Escenas y continuidad</h2><p className="mt-2 text-sm leading-6 text-stone-600">Los guiones, escenas y recursos visuales deben conservar coherencia narrativa y verificar los datos científicos o educativos que se comuniquen.</p></div>
+        <div><p className="text-xs font-semibold uppercase tracking-widest text-amber-800">03 · Publicación</p><h2 className="mt-2 font-serif text-xl">Registro y fuentes</h2><p className="mt-2 text-sm leading-6 text-stone-600">Al publicar se registra el enlace final, título, descripción, fecha y créditos. Las ideas o guiones en proceso no se presentan como episodios publicados.</p></div>
+      </section>
       <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {podcastSections.map((section, index) => {
           const Icon = section.icon;
