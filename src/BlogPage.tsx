@@ -58,8 +58,8 @@ export default function BlogPage() {
   return <div className="min-h-screen bg-stone-50 text-stone-900">
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 gap-4">
-        <a href="/pagina-/" className="font-serif text-xl font-semibold tracking-wide">LEAF <span className="text-sm font-normal text-amber-800">2026—2030</span></a>
-        <a href="/pagina-/" className="flex items-center gap-2 text-sm text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver al Campus</a>
+        <a href="/" className="font-serif text-xl font-semibold tracking-wide">LEAF <span className="text-sm font-normal text-amber-800">2026—2030</span></a>
+        <a href="/" className="flex items-center gap-2 text-sm text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver al Campus</a>
       </div>
     </header>
     <main className="mx-auto max-w-6xl px-5 py-12 sm:py-20">

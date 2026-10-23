@@ -159,8 +159,8 @@ export default function App() {
               1° Semestre
             </button>
 
-            <a href="/pagina-/?articles=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Artículos ↗</a>
-            <a href="/pagina-/?podcast=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Podcast ↗</a>
+            <a href="/?articles=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Artículos ↗</a>
+            <a href="/?podcast=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Podcast ↗</a>
           </nav>
 
         </div>
