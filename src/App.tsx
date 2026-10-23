@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { INITIAL_CURRICULUM, STORAGE_KEY } from './data/defaultCurriculum';
+import React, { useState, useEffect, useRef } from 'react';
+import { INITIAL_CURRICULUM } from './data/defaultCurriculum';
+import { api, isMod, useSession } from './lib/api';
+import { ResourcesSection } from './components/ResourcesSection';
 import { Semester, ModuleItem, EmergentTechTeamVideo } from './types/curriculum';
 import { SemesterView } from './components/SemesterView';
 import { ModuleDetailView } from './components/ModuleDetailView';
@@ -14,21 +16,18 @@ import { CalendarSection } from './components/CalendarSection';
 import { ChevronRight } from 'lucide-react';
 
 export default function App() {
-  // Curriculum state persisted in localStorage
-  const [curriculum, setCurriculum] = useState<Semester[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Error loading saved curriculum:', e);
-    }
-    return INITIAL_CURRICULUM;
-  });
+  // El contenido de los semestres se guarda en la base de datos (lo editan moderadores y admin).
+  const [curriculum, setCurriculum] = useState<Semester[]>(INITIAL_CURRICULUM);
+  const { user } = useSession();
+  const canEdit = isMod(user?.role) && !user?.mustChange;
+  const dirty = useRef(false);
+  const [saveState, setSaveState] = useState<'' | 'saving' | 'saved' | 'error'>('');
+
+  useEffect(() => {
+    api<{ value: Semester[] | null }>('content/curriculum')
+      .then(r => { if (Array.isArray(r.value) && r.value.length > 0) setCurriculum(r.value); })
+      .catch(() => {});
+  }, []);
 
   // Navigation state:
   // view: 'home' | 'semester' | 'module'
@@ -42,14 +41,18 @@ export default function App() {
   const [isAddingModule, setIsAddingModule] = useState<boolean>(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState<boolean>(false);
 
-  // Auto-save changes to localStorage
+  // Guardado automático en el servidor cuando un moderador hace cambios
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(curriculum));
-    } catch (e) {
-      console.error('Error saving curriculum:', e);
-    }
-  }, [curriculum]);
+    if (!dirty.current || !canEdit) return;
+    setSaveState('saving');
+    const t = setTimeout(() => {
+      api('content/curriculum', { method: 'PUT', body: { value: curriculum, detail: 'Módulos del semestre' } })
+        .then(() => { dirty.current = false; setSaveState('saved'); })
+        .catch(() => setSaveState('error'));
+    }, 800);
+    return () => clearTimeout(t);
+  }, [curriculum, canEdit]);
+  const editCurriculum: typeof setCurriculum = (next) => { dirty.current = true; setCurriculum(next); };
 
   // Current active semester
   const currentSemester = curriculum.find((s) => s.number === activeSemesterNum) || curriculum[0];
@@ -77,7 +80,7 @@ export default function App() {
 
   // Content updates
   const handleUpdateModule = (updated: ModuleItem) => {
-    setCurriculum((prev) =>
+    editCurriculum((prev) =>
       prev.map((sem) => {
         if (sem.number !== updated.semesterNumber) return sem;
         return {
@@ -89,7 +92,7 @@ export default function App() {
   };
 
   const handleAddNewModule = (newMod: ModuleItem) => {
-    setCurriculum((prev) =>
+    editCurriculum((prev) =>
       prev.map((sem) => {
         if (sem.number !== newMod.semesterNumber) return sem;
         return {
@@ -101,7 +104,7 @@ export default function App() {
   };
 
   const handleUpdateEmergentVideo = (updatedVideo: EmergentTechTeamVideo) => {
-    setCurriculum((prev) =>
+    editCurriculum((prev) =>
       prev.map((sem) => {
         if (sem.number !== 1) return sem;
         return {
@@ -115,12 +118,12 @@ export default function App() {
   };
 
   const handleImportCurriculum = (imported: Semester[]) => {
-    setCurriculum(imported);
+    editCurriculum(imported);
     goToHome();
   };
 
   const handleResetCurriculum = () => {
-    setCurriculum(INITIAL_CURRICULUM);
+    editCurriculum(INITIAL_CURRICULUM);
     goToHome();
   };
 
@@ -161,10 +164,31 @@ export default function App() {
 
             <a href="/?articles=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Artículos ↗</a>
             <a href="/?podcast=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Podcast ↗</a>
+            {canEdit && (
+              <button
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${isEditMode ? 'bg-amber-700 text-white' : 'border border-stone-300 text-stone-700'}`}
+                title="Editar módulos y textos de la página"
+              >
+                {isEditMode ? 'Salir de edición' : 'Modo edición'}
+              </button>
+            )}
+            <a href="/panel" className="rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-900">
+              {user ? 'Panel' : 'Entrar'}
+            </a>
           </nav>
 
         </div>
       </header>
+
+      {isEditMode && canEdit && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900">
+          Modo edición activo: los cambios se guardan para todos los visitantes.{' '}
+          {saveState === 'saving' && 'Guardando…'}
+          {saveState === 'saved' && 'Guardado ✓'}
+          {saveState === 'error' && <strong className="text-red-700">No se pudo guardar. Revisa tu conexión o vuelve a entrar.</strong>}
+        </div>
+      )}
 
       {/* MAIN VIEW SWITCHER */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-14">
@@ -244,6 +268,7 @@ export default function App() {
               </div>
             </div>
             <CalendarSection />
+            <ResourcesSection />
           </div>
         )}
 

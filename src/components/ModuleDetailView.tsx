@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ModuleItem } from '../types/curriculum';
+import { ResourcesSection } from './ResourcesSection';
 import { RollerCoasterSimulator } from './simulators/RollerCoasterSimulator';
 import { FlyingChairsSimulator } from './simulators/FlyingChairsSimulator';
 import { SwingingShipSimulator } from './simulators/SwingingShipSimulator';
@@ -368,7 +369,11 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
       {activeTab === 'recursos' && (
         <div className="space-y-6 animate-fadeIn">
           <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-7 space-y-4">
-            <div><h3 className="text-xl font-bold text-stone-900 font-display">Bibliografía y documentos de investigación</h3><p className="mt-1 text-sm text-stone-500">Sube PDFs, documentos o archivos de apoyo usados para investigar este proyecto.</p></div>
+            <ResourcesSection moduleId={module.id} compact />
+            <p className="text-sm text-stone-500">Para compartir documentos, fuentes o evidencias de este proyecto con todos, súbelos desde el <a href="/panel" className="font-semibold text-amber-800 underline">panel</a> y elige este proyecto.</p>
+          </section>
+          <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-7 space-y-4">
+            <div><h3 className="text-xl font-bold text-stone-900 font-display">Mis archivos de consulta</h3><p className="mt-1 text-sm text-stone-500">Archivos que guardas solo en este navegador para tu consulta personal; nadie más los ve.</p></div>
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 bg-stone-50 p-5 text-sm font-semibold text-stone-700 hover:bg-stone-100">
               <Upload className="h-4 w-4"/> Seleccionar documentos
               <input type="file" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.rtf" className="hidden" onChange={e => { handleBibliographyUpload(e.target.files); e.currentTarget.value=''; }} />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDate, usePublicPosts, youtubeId } from './lib/api';
 import { ArrowLeft, Headphones, PlayCircle, Mic2, BarChart3 } from 'lucide-react';
 
 const podcastSections = [
@@ -9,6 +10,7 @@ const podcastSections = [
 ];
 
 export default function PodcastPage() {
+  const episodes = usePublicPosts('podcast');
   return <div className="min-h-screen bg-stone-50 text-stone-900">
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
@@ -39,6 +41,23 @@ export default function PodcastPage() {
           </article>;
         })}
       </div>
+      {episodes.length > 0 && <section className="mt-16 border-t border-stone-200 pt-10">
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-800">Episodios de la generación</p>
+        <h2 className="mt-2 font-serif text-3xl">Nuevos episodios</h2>
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {episodes.map(ep => {
+            const vid = youtubeId(ep.url);
+            return <article key={ep.id} className="flex flex-col border border-stone-200 bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{ep.data?.section || 'Podcast'}{ep.data?.duration ? ' · ' + ep.data.duration : ''}</p>
+              <h3 className="mt-2 font-serif text-2xl">{ep.title}</h3>
+              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-stone-600">{ep.summary}</p>
+              <p className="mt-3 text-xs text-stone-500">Con {ep.data?.participants || ep.authorName} · {formatDate(ep.publishedAt)}</p>
+              {vid && <div className="mt-5 w-full overflow-hidden rounded-xl border border-stone-200 bg-black"><iframe className="block w-full aspect-video" src={`https://www.youtube.com/embed/${vid}`} title={ep.title} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /></div>}
+              <a href={ep.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-800 transition hover:border-amber-700 hover:text-amber-900"><PlayCircle size={17}/> Escuchar episodio <span aria-hidden="true">↗</span></a>
+            </article>;
+          })}
+        </div>
+      </section>}
     </main>
     <footer className="border-t border-stone-200 px-5 py-6 text-center text-xs tracking-widest text-stone-500">LEAF 2026—2030 · PODCAST</footer>
   </div>;
