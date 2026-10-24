@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Lock, LogIn, UserRound, X } from 'lucide-react';
 import { api, type User } from '../lib/api';
 
@@ -47,11 +48,11 @@ export function LoginButton({ user: known }: { user?: User | null }) {
   return <>
     <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-900">
       <LogIn size={13} /> Iniciar sesión</button>
-    {open && <div className="fixed inset-0 z-50 flex overflow-y-auto bg-stone-950/60 p-4" role="dialog" aria-modal="true" aria-label="Iniciar sesión" onClick={() => setOpen(false)}>
+    {open && createPortal(<div className="fixed inset-0 z-50 flex overflow-y-auto bg-stone-950/60 p-4" role="dialog" aria-modal="true" aria-label="Iniciar sesión" onClick={() => setOpen(false)}>
       <div className="relative m-auto w-full max-w-sm rounded-2xl bg-white p-7 text-left text-stone-900 shadow-2xl" onClick={e => e.stopPropagation()}>
         <button onClick={() => setOpen(false)} aria-label="Cerrar" className="absolute right-4 top-4 rounded-full p-1 text-stone-400 hover:bg-stone-100"><X size={18} /></button>
         <LoginForm onDone={() => { window.location.href = '/panel'; }} />
       </div>
-    </div>}
+    </div>, document.body)}
   </>;
 }
