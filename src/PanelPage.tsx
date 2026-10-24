@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, LogOut, FlaskConical, Wrench, Truck, KeyRound, CheckCircle2 } from 'lucide-react';
-import { api, isMod, AI_TASKS_BY_ROLE, ROLE_DUTIES, ROLE_LABEL, TEAM_DUTIES, TEAM_LABEL, type Team, type User } from './lib/api';
+import { api, isMod, isLeader, AI_TASKS_BY_ROLE, ROLE_DUTIES, ROLE_LABEL, TEAM_DUTIES, TEAM_LABEL, type Team, type User } from './lib/api';
 import { useSession } from './lib/api';
 import { LoginForm } from './components/LoginButton';
 import { SubmitPanel } from './components/panel/SubmitForms';
@@ -8,6 +8,7 @@ import { ModerationPanel, MySubmissions } from './components/panel/Moderation';
 import { UsersPanel, ActivityPanel } from './components/panel/AdminPanels';
 import { ActivityChart } from './components/panel/ActivityChart';
 import { AiAssist } from './components/panel/AiAssist';
+import { CaptainWizard, CaptainTab, CaptainsOverview, VersionsPanel, useCaptainProfile } from './components/panel/CaptainPanels';
 
 const TEAMS: { id: Team; icon: any }[] = [
   { id: 'investigacion', icon: FlaskConical },
@@ -86,7 +87,9 @@ function Home({ user, team, go }: { user: User; team: Team | ''; go: (t: Tab) =>
           {user.role !== 'maestro' && <button onClick={() => go('publicar')} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white">Publicar algo</button>}
           {isMod(user.role) && <button onClick={() => go('moderar')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Revisar envíos</button>}
           {isMod(user.role) && <a href="/" className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Editar la página (Modo edición)</a>}
-          {(user.role === 'admin' || user.role === 'maestro') && <button onClick={() => go('actividad')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Actividad y calificaciones</button>}
+          {user.role === 'capitan' && <button onClick={() => go('capitania')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Mi capitanía</button>}
+          {user.role === 'admin' && <button onClick={() => go('versiones')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Versiones anteriores</button>}
+          {(user.role === 'admin' || user.role === 'maestro' || user.role === 'capitan') && <button onClick={() => go('actividad')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Actividad y calificaciones</button>}
         </div>
       </section>
       <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
@@ -103,14 +106,17 @@ function AiTab({ user }: { user: User }) {
   const tasks = AI_TASKS_BY_ROLE[user.role];
   const hint = user.role === 'admin'
     ? 'Como administrador puedes pedirle cualquier tarea de edición o gestión, incluido un informe de actividad para calificar.'
-    : 'Como moderador, la IA te ayuda a revisar envíos y a redactar o mejorar textos de la página.';
-  return <div className="max-w-3xl"><AiAssist tasks={tasks} hint={hint} title="Asistente de IA" /></div>;
+    : user.role === 'capitan'
+      ? 'Como capitán, la IA conoce lo que redactaste sobre tu capitanía y tu equipo, y te ayuda a planear y a modificar la página.'
+      : 'Como moderador, la IA te ayuda a revisar envíos y a redactar o mejorar textos de la página.';
+  return <div className="max-w-3xl"><AiAssist tasks={tasks} hint={hint} title="Asistente de IA" allowEmptyText={user.role === 'capitan'} /></div>;
 }
 
-type Tab = 'inicio' | 'publicar' | 'mios' | 'moderar' | 'ia' | 'usuarios' | 'actividad' | 'cuenta';
+type Tab = 'inicio' | 'publicar' | 'mios' | 'moderar' | 'ia' | 'capitania' | 'usuarios' | 'actividad' | 'versiones' | 'capitanes' | 'cuenta';
 
 export default function PanelPage() {
   const { user, team, ready, refresh, setTeam } = useSession();
+  const captain = useCaptainProfile(user?.role === 'capitan');
   const [picking, setPicking] = useState(false);
   const [tab, setTab] = useState<Tab>('inicio');
   const [error, setError] = useState('');
@@ -124,13 +130,19 @@ export default function PanelPage() {
   if (!ready) return <Shell><p className="text-center text-sm text-stone-500">Cargando…</p></Shell>;
   if (!user) return <Shell><div className="mx-auto max-w-sm rounded-2xl border border-stone-200 bg-white p-7 shadow-sm"><LoginForm onDone={refresh} /></div></Shell>;
   const shell = (c: React.ReactNode) => <Shell user={user} team={team} onLogout={logout} onChangeTeam={() => setPicking(true)}>{c}</Shell>;
-  if (user.role !== 'maestro' && (!team || picking)) return shell(<>{error && <p className="mb-4 text-center text-sm text-red-700">{error}</p>}<TeamPicker onPick={pickTeam} /></>);
+  if (user.role === 'capitan') {
+    if (captain.profile === undefined) return shell(<p className="text-center text-sm text-stone-500">Cargando…</p>);
+    if (captain.profile === null) return shell(<CaptainWizard me={user} onDone={captain.reload} />);
+  }
+  if (user.role !== 'maestro' && user.role !== 'capitan' && (!team || picking)) return shell(<>{error && <p className="mb-4 text-center text-sm text-red-700">{error}</p>}<TeamPicker onPick={pickTeam} /></>);
 
   const tabs: [Tab, string][] = [['inicio', 'Inicio']];
   if (user.role !== 'maestro') tabs.push(['publicar', 'Publicar'], ['mios', 'Mis envíos']);
   if (isMod(user.role)) tabs.push(['moderar', 'Moderación'], ['ia', 'Asistente de IA']);
-  if (user.role === 'admin') tabs.push(['usuarios', 'Usuarios y permisos']);
-  if (user.role === 'admin' || user.role === 'maestro') tabs.push(['actividad', 'Actividad y calificaciones']);
+  if (user.role === 'capitan') tabs.push(['capitania', 'Mi capitanía']);
+  if (isLeader(user.role)) tabs.push(['usuarios', 'Usuarios y permisos']);
+  if (user.role === 'admin' || user.role === 'maestro' || user.role === 'capitan') tabs.push(['actividad', 'Actividad y calificaciones']);
+  if (user.role === 'admin') tabs.push(['versiones', 'Versiones anteriores'], ['capitanes', 'Capitanes']);
   tabs.push(['cuenta', 'Mi cuenta']);
   const current = tabs.some(([t]) => t === tab) ? tab : 'inicio';
 
@@ -150,6 +162,9 @@ export default function PanelPage() {
     {current === 'ia' && <AiTab user={user} />}
     {current === 'usuarios' && <UsersPanel me={user} />}
     {current === 'actividad' && <ActivityPanel />}
+    {current === 'capitania' && captain.profile && <CaptainTab me={user} profile={captain.profile} onChanged={captain.reload} />}
+    {current === 'versiones' && <VersionsPanel />}
+    {current === 'capitanes' && <CaptainsOverview />}
     {current === 'cuenta' && <ChangePassword />}
   </div>);
 }

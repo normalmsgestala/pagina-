@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   pass_hash TEXT NOT NULL,
   pass_salt TEXT NOT NULL,
   must_change INTEGER NOT NULL DEFAULT 1,
+  captain INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -81,3 +82,29 @@ CREATE TABLE IF NOT EXISTS activity (
 CREATE INDEX IF NOT EXISTS idx_activity_created ON activity(created_at);
 CREATE INDEX IF NOT EXISTS idx_activity_user ON activity(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_action ON activity(action, username, created_at);
+
+-- Historial: últimas 10 versiones por tipo (página, publicaciones, calendario). Solo el admin restaura.
+CREATE TABLE IF NOT EXISTS versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  scope TEXT NOT NULL,
+  ref TEXT NOT NULL,
+  action TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  data TEXT NOT NULL,
+  user_id INTEGER,
+  user_name TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_versions_scope ON versions(scope, id);
+
+-- Perfil de cada capitán por semestre
+CREATE TABLE IF NOT EXISTS captain_profiles (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  semester TEXT NOT NULL,
+  area TEXT NOT NULL,
+  duties TEXT NOT NULL,
+  goals TEXT NOT NULL,
+  wants TEXT NOT NULL DEFAULT '[]',
+  team TEXT NOT NULL DEFAULT '[]',
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

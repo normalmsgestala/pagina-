@@ -12,11 +12,11 @@ export interface DB { prepare(sql: string): Stmt; batch(stmts: Stmt[]): Promise<
 export interface AiBinding { run(model: string, input: Record<string, unknown>): Promise<any> }
 export interface Env { DB?: DB; AI?: AiBinding }
 
-export type Role = 'admin' | 'moderador' | 'editor' | 'maestro';
+export type Role = 'admin' | 'capitan' | 'moderador' | 'editor' | 'maestro';
 export type Team = 'investigacion' | 'mecanica' | 'logistica';
 type Kind = 'articulo' | 'podcast' | 'documento' | 'fuente' | 'evidencia';
 
-const ROLES: Role[] = ['admin', 'moderador', 'editor', 'maestro'];
+const ROLES: Role[] = ['admin', 'capitan', 'moderador', 'editor', 'maestro'];
 const TEAMS: Team[] = ['investigacion', 'mecanica', 'logistica'];
 const KINDS: Kind[] = ['articulo', 'podcast', 'documento', 'fuente', 'evidencia'];
 const CONTENT_KEYS = ['curriculum', 'emerging-tech'];
@@ -98,7 +98,10 @@ function cleanData(v: unknown): Record<string, unknown> {
   if (JSON.stringify(out).length > 120000) throw new HttpError(400, 'El contenido es demasiado largo');
   return out;
 }
-const isMod = (role: string) => role === 'admin' || role === 'moderador';
+const isMod = (role: string) => role === 'admin' || role === 'capitan' || role === 'moderador';
+/** Rol efectivo: los capitanes se guardan como moderadores con la marca captain = 1. */
+const effRole = (u: Row): Role => (u.captain ? 'capitan' : u.role);
+const MOD_ROLES: Role[] = ['admin', 'capitan', 'moderador'];
 
 function cookieValue(req: Request, name: string) {
   const raw = req.headers.get('cookie') || '';
@@ -130,10 +133,11 @@ async function getSession(db: DB, req: Request): Promise<Session | null> {
   if (!token) return null;
   const tokenHash = await sha256(token);
   const row = await db.prepare(
-    `SELECT s.team, u.id, u.username, u.full_name, u.role, u.must_change, u.active
+    `SELECT s.team, u.id, u.username, u.full_name, u.role, u.captain, u.must_change, u.active
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ? AND s.expires_at > datetime('now')`).bind(tokenHash).first();
   if (!row || !row.active) return null;
+  row.role = effRole(row);
   return { user: row, team: row.team || '', tokenHash };
 }
 function need(s: Session | null, roles?: Role[]): Session {
@@ -145,7 +149,7 @@ function needReady(s: Session | null): Session {
   return need(s);
 }
 
-const publicUser = (u: Row) => ({ id: u.id, username: u.username, fullName: u.full_name, role: u.role, mustChange: !!u.must_change });
+const publicUser = (u: Row) => ({ id: u.id, username: u.username, fullName: u.full_name, role: effRole(u), mustChange: !!u.must_change });
 const postOut = (p: Row) => ({
   id: p.id, kind: p.kind, title: p.title, summary: p.summary, url: p.url, moduleId: p.module_id,
   data: (() => { try { return JSON.parse(p.data || '{}'); } catch { return {}; } })(),
@@ -160,9 +164,9 @@ const eventOut = (e: Row) => ({
 
 // ---------- IA ----------
 const AI_MODELS = ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.1-8b-instruct-fp8'];
-const ALL_EDIT: Role[] = ['editor', 'moderador', 'admin'];
-const MODS: Role[] = ['moderador', 'admin'];
-const AI_HOURLY_LIMIT: Record<Role, number> = { editor: 20, moderador: 40, admin: 100, maestro: 0 };
+const ALL_EDIT: Role[] = ['editor', 'moderador', 'capitan', 'admin'];
+const MODS: Role[] = ['moderador', 'capitan', 'admin'];
+const AI_HOURLY_LIMIT: Record<Role, number> = { editor: 20, moderador: 40, capitan: 60, admin: 100, maestro: 0 };
 
 /** Tareas de IA y quién puede usarlas. Editores: solo su propio texto; moderadores: revisión y textos de la página; admin: todo. */
 export const AI_TASKS: Record<string, { roles: Role[]; does: string; open?: boolean }> = {
@@ -174,6 +178,7 @@ export const AI_TASKS: Record<string, { roles: Role[]; does: string; open?: bool
   sugerencias: { roles: ALL_EDIT, does: 'Revisar el borrador del estudiante y darle de 3 a 6 sugerencias concretas para mejorarlo (estructura, claridad, rigor, fuentes). No reescribas el texto completo ni hagas el trabajo por él.' },
   revisar: { roles: MODS, does: 'Evaluar como moderador un envío de un estudiante según: pertinencia con el proyecto LEAF, claridad, ortografía, rigor, fuentes verificables y enlaces. Responde con: 1) Recomendación: Aprobar, Pedir cambios o Rechazar; 2) Observaciones breves en viñetas; 3) Una línea que empiece con "Comentario para el autor:" con un mensaje breve y respetuoso.' },
   pagina: { roles: MODS, does: 'Redactar o reescribir un texto para una sección de la página LEAF (módulos, guías, descripciones, avisos) siguiendo la instrucción. Devuelve solo el texto listo para pegar.' },
+  capitania: { roles: ['capitan', 'admin'], open: true, does: 'Ayudar a un capitán de LEAF a planear y realizar sus actividades y a modificar la página (secciones, módulos, textos, calendario, organización del contenido) según lo que él mismo redactó sobre su capitanía, sus tareas, su equipo y lo que quiere hacer en la página. Propón pasos concretos, textos listos para pegar y cómo repartir el trabajo entre su equipo.' },
   libre: { roles: ['admin'], open: true, does: 'Ayudar al administrador de LEAF con cualquier tarea de redacción, edición, organización, planeación o gestión de la página y del grupo.' },
   actividad: { roles: ['admin'], open: true, does: 'Analizar el resumen de actividad de los estudiantes y redactar un informe breve para apoyar la calificación: quién participa más y menos, qué tipo de trabajos entrega cada quien y recomendaciones. Usa solo los datos dados.' },
 };
@@ -218,6 +223,67 @@ async function activityDigest(db: DB) {
     rows.results.map(r => [r.full_name, r.role, r.sesiones || 0, r.articulos || 0, r.podcasts || 0, r.documentacion || 0, r.evidencias || 0, r.ultima || 'nunca'].join(' | ')).join('\n');
 }
 
+// ---------- versiones ----------
+const VERSION_LIMIT = 10;
+/** Guarda el estado anterior antes de un cambio y conserva solo las últimas 10 versiones por tipo. */
+async function snapshot(db: DB, ss: Session, scope: string, ref: string, action: string, label: string, data: unknown) {
+  await db.prepare('INSERT INTO versions (scope, ref, action, label, data, user_id, user_name) VALUES (?,?,?,?,?,?,?)')
+    .bind(scope, ref, action, String(label || '').slice(0, 200), typeof data === 'string' ? data : JSON.stringify(data), ss.user.id, ss.user.full_name || '').run();
+  await db.prepare(`DELETE FROM versions WHERE scope = ? AND id NOT IN (SELECT id FROM versions WHERE scope = ? ORDER BY id DESC LIMIT ${VERSION_LIMIT})`)
+    .bind(scope, scope).run();
+}
+const POST_COLS = ['kind', 'title', 'summary', 'url', 'module_id', 'data', 'team', 'status', 'author_id', 'reviewer_id', 'review_note', 'created_at', 'updated_at', 'published_at'];
+const EVENT_COLS = ['date', 'title', 'description', 'media_urls', 'team', 'status', 'author_id', 'reviewer_id', 'review_note', 'created_at'];
+async function restoreRow(db: DB, ss: Session, scope: string, table: string, cols: string[], v: Row) {
+  const row = JSON.parse(v.data);
+  const current = await db.prepare(`SELECT * FROM ${table} WHERE id = ?`).bind(row.id).first();
+  if (current) {
+    await snapshot(db, ss, scope, String(row.id), 'antes_de_restaurar', current.title, current);
+    await db.prepare(`UPDATE ${table} SET ${cols.map(c => c + ' = ?').join(', ')} WHERE id = ?`).bind(...cols.map(c => row[c] ?? null), row.id).run();
+  } else {
+    await db.prepare(`INSERT INTO ${table} (id, ${cols.join(', ')}) VALUES (?, ${cols.map(() => '?').join(', ')})`).bind(row.id, ...cols.map(c => row[c] ?? null)).run();
+  }
+}
+async function restoreVersion(db: DB, ss: Session, v: Row) {
+  if (v.scope === 'pagina') {
+    const cur = await db.prepare('SELECT value FROM site_content WHERE key = ?').bind(v.ref).first();
+    if (cur) await snapshot(db, ss, 'pagina', v.ref, 'antes_de_restaurar', v.ref, cur.value);
+    await db.prepare(`INSERT INTO site_content (key, value, updated_by, updated_at) VALUES (?,?,?,datetime('now'))
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at`)
+      .bind(v.ref, v.data, ss.user.id).run();
+  } else if (v.scope === 'publicacion') await restoreRow(db, ss, 'publicacion', 'posts', POST_COLS, v);
+  else if (v.scope === 'calendario') await restoreRow(db, ss, 'calendario', 'calendar_events', EVENT_COLS, v);
+  else throw new HttpError(400, 'Tipo de versión desconocido');
+}
+
+// ---------- capitanes ----------
+function captainOut(r: Row) {
+  const parse = (x: string) => { try { return JSON.parse(x || '[]'); } catch { return []; } };
+  return { userId: r.user_id, name: r.full_name, semester: r.semester, area: r.area, duties: r.duties, goals: r.goals,
+    wants: parse(r.wants), team: parse(r.team), updatedAt: r.updated_at };
+}
+/** Contexto del capitán para la IA: lo que él redactó, su equipo y la estructura actual de la página. */
+async function captainContext(db: DB, userId: number) {
+  const p = await db.prepare('SELECT * FROM captain_profiles WHERE user_id = ?').bind(userId).first();
+  if (!p) return '\n\nEste usuario todavía no ha llenado su perfil de capitán; pídele que lo llene en su panel.';
+  const ids: number[] = (() => { try { return JSON.parse(p.team || '[]'); } catch { return []; } })();
+  let names = '';
+  if (ids.length) {
+    const r = await db.prepare(`SELECT full_name FROM users WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all();
+    names = r.results.map(x => x.full_name).join(', ');
+  }
+  const cur = await db.prepare(`SELECT value FROM site_content WHERE key = 'curriculum'`).first();
+  let structure = '';
+  try {
+    const sems = cur ? JSON.parse(cur.value) : [];
+    structure = sems.map((s: Row) => `${s.name}: ${(s.modules || []).map((m: Row) => m.title).join(' | ') || 'sin equipos'}`).join('\n');
+  } catch { /* sin estructura */ }
+  const wants = (() => { try { return JSON.parse(p.wants || '[]').join(', '); } catch { return ''; } })();
+  return `\n\nPerfil del capitán (redactado por él):\n- Semestre: ${p.semester}\n- Es capitán de: ${p.area}\n- Lo que tiene que hacer: ${p.duties}\n- Lo que quiere hacer en la página: ${p.goals}${wants ? ' (' + wants + ')' : ''}\n- Su equipo: ${names || 'sin registrar'}` +
+    (structure ? `\n\nEstructura actual de la página LEAF:\n${structure}` : '') +
+    '\n\nLimítate a ayudarle con su capitanía y con cambios a la página LEAF. Si pide algo ajeno, responde: "Solo puedo ayudarte con tu capitanía y la página LEAF."';
+}
+
 // ---------- gráfica ----------
 const CHART_DAYS = [7, 14, 30, 60, 90, 180];
 export function chartConfig(v: Row) {
@@ -258,7 +324,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         await db.prepare(`INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, datetime('now', '+${SESSION_DAYS} days'))`)
           .bind(await sha256(token), user!.id).run();
         await db.prepare(`DELETE FROM sessions WHERE expires_at <= datetime('now')`).run();
-        await log(db, { user: user!, team: '', tokenHash: '' }, 'inicio_sesion');
+        await log(db, { user: { ...user!, role: effRole(user!) }, team: '', tokenHash: '' }, 'inicio_sesion');
         return json({ user: publicUser(user!), team: '' }, 200, { 'set-cookie': sessionCookie(token, SESSION_DAYS * 86400) });
       }
       if (sub === 'logout' && m === 'POST') {
@@ -310,7 +376,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         if (kind) { if (!KINDS.includes(kind as Kind)) throw new HttpError(400, 'Tipo no válido'); where.push('p.kind = ?'); args.push(kind); }
         if (mine) { const ss = need(s); where.push('p.author_id = ?'); args.push(ss.user.id); }
         else if (status !== 'approved') {
-          need(s, ['admin', 'moderador']);
+          need(s, MOD_ROLES);
           if (status !== 'all') { where.push('p.status = ?'); args.push(status); }
         } else where.push(`p.status = 'approved'`);
         const rows = await db.prepare(
@@ -352,6 +418,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         const ownPending = post.author_id === ss.user.id && post.status !== 'approved';
         if (m === 'DELETE') {
           if (!mod && !ownPending) throw new HttpError(403, 'No tienes permiso para borrar esto');
+          await snapshot(db, ss, 'publicacion', String(id), 'eliminacion', post.title, post);
           await db.prepare('DELETE FROM posts WHERE id = ?').bind(id).run();
           await log(db, ss, 'eliminacion', `${post.kind} #${id} ${post.title}`);
           return json({ ok: true });
@@ -360,6 +427,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         if (b.action === 'approve' || b.action === 'reject') {
           if (!mod) throw new HttpError(403, 'Solo moderadores pueden aprobar');
           const status = b.action === 'approve' ? 'approved' : 'rejected';
+          await snapshot(db, ss, 'publicacion', String(id), status === 'approved' ? 'aprobacion' : 'rechazo', post.title, post);
           await db.prepare(`UPDATE posts SET status = ?, reviewer_id = ?, review_note = ?, updated_at = datetime('now'),
             published_at = CASE WHEN ? = 'approved' THEN COALESCE(published_at, datetime('now')) ELSE published_at END WHERE id = ?`)
             .bind(status, ss.user.id, str(b.note, 1000, 'nota'), status, id).run();
@@ -368,6 +436,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         }
         if (!mod && !ownPending) throw new HttpError(403, 'No puedes editar esto');
         const kind = post.kind as Kind;
+        await snapshot(db, ss, 'publicacion', String(id), 'edicion', post.title, post);
         await db.prepare(`UPDATE posts SET title = ?, summary = ?, url = ?, module_id = ?, data = ?, updated_at = datetime('now'),
             status = ? WHERE id = ?`)
           .bind(str(b.title, 300, 'título', true), str(b.summary, 5000, 'resumen'),
@@ -383,7 +452,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
       const id = sub ? Number(sub) : 0;
       if (!sub && m === 'GET') {
         const all = u.searchParams.get('status') === 'all';
-        if (all) need(s, ['admin', 'moderador']);
+        if (all) need(s, MOD_ROLES);
         const rows = await db.prepare(
           `SELECT e.*, u.full_name AS author_name FROM calendar_events e JOIN users u ON u.id = e.author_id
            ${all ? '' : "WHERE e.status = 'approved'"} ORDER BY e.date DESC LIMIT 500`).all();
@@ -415,6 +484,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         const ownPending = ev.author_id === ss.user.id && ev.status !== 'approved';
         if (m === 'DELETE') {
           if (!mod && !ownPending) throw new HttpError(403, 'No tienes permiso para borrar esto');
+          await snapshot(db, ss, 'calendario', String(id), 'eliminacion', ev.title, ev);
           await db.prepare('DELETE FROM calendar_events WHERE id = ?').bind(id).run();
           await log(db, ss, 'eliminacion', `calendario #${id} ${ev.title}`);
           return json({ ok: true });
@@ -423,6 +493,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         if (!mod) throw new HttpError(403, 'Solo moderadores pueden aprobar');
         const status = b.action === 'approve' ? 'approved' : b.action === 'reject' ? 'rejected' : '';
         if (!status) throw new HttpError(400, 'Acción no válida');
+        await snapshot(db, ss, 'calendario', String(id), status === 'approved' ? 'aprobacion' : 'rechazo', ev.title, ev);
         await db.prepare('UPDATE calendar_events SET status = ?, reviewer_id = ?, review_note = ? WHERE id = ?')
           .bind(status, ss.user.id, str(b.note, 1000, 'nota'), id).run();
         await log(db, ss, status === 'approved' ? 'aprobacion' : 'rechazo', `calendario #${id} ${ev.title}`);
@@ -437,10 +508,12 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         return json({ value: row ? JSON.parse(row.value) : null, updatedAt: row?.updated_at || null });
       }
       if (m === 'PUT') {
-        const ss = needReady(s); need(ss, ['admin', 'moderador']);
+        const ss = needReady(s); need(ss, MOD_ROLES);
         const b = await body(req);
         const value = JSON.stringify(b.value ?? null);
         if (value.length > 900000) throw new HttpError(400, 'El contenido es demasiado grande');
+        const prev = await db.prepare('SELECT value FROM site_content WHERE key = ?').bind(sub).first();
+        if (prev && prev.value !== value) await snapshot(db, ss, 'pagina', sub, 'edicion', str(b.detail, 300, 'detalle') || sub, prev.value);
         await db.prepare(`INSERT INTO site_content (key, value, updated_by, updated_at) VALUES (?,?,?,datetime('now'))
           ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at`)
           .bind(sub, value, ss.user.id).run();
@@ -449,13 +522,14 @@ export async function handle(req: Request, env: Env): Promise<Response> {
       }
     }
 
-    // ----- usuarios (solo admin) -----
+    // ----- usuarios (admin y capitanes; solo el admin toca a admins y capitanes) -----
     if (area === 'users') {
-      const ss = needReady(s); need(ss, ['admin']);
+      const ss = needReady(s); need(ss, ['admin', 'capitan']);
+      const actorAdmin = ss.user.role === 'admin';
       const id = sub ? Number(sub) : 0;
       if (!sub && m === 'GET') {
         const rows = await db.prepare(
-          `SELECT u.id, u.username, u.full_name, u.role, u.must_change, u.active, u.created_at,
+          `SELECT u.id, u.username, u.full_name, u.role, u.captain, u.must_change, u.active, u.created_at,
              (SELECT MAX(created_at) FROM activity a WHERE a.user_id = u.id AND a.action = 'inicio_sesion') AS last_login
            FROM users u ORDER BY u.full_name`).all();
         return json({ users: rows.results.map(r => ({ ...publicUser(r), active: !!r.active, lastLogin: r.last_login, createdAt: r.created_at })) });
@@ -466,12 +540,13 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         if (!/^[a-z0-9._-]{3,60}$/.test(username)) throw new HttpError(400, 'Usuario: solo minúsculas, números, punto o guion');
         const role = str(b.role, 20, 'rol', true) as Role;
         if (!ROLES.includes(role)) throw new HttpError(400, 'Rol no válido');
+        if (!actorAdmin && (role === 'admin' || role === 'capitan')) throw new HttpError(403, 'Solo el administrador nombra administradores y capitanes');
         const exists = await db.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
         if (exists) throw new HttpError(409, 'Ese usuario ya existe');
         const fullName = str(b.fullName, 120, 'nombre', true);
         const password = defaultPassword(fullName); const salt = randomHex(16);
-        await db.prepare('INSERT INTO users (username, full_name, role, pass_hash, pass_salt, must_change) VALUES (?,?,?,?,?,0)')
-          .bind(username, fullName, role, await hashPassword(password, salt), salt).run();
+        await db.prepare('INSERT INTO users (username, full_name, role, captain, pass_hash, pass_salt, must_change) VALUES (?,?,?,?,?,?,0)')
+          .bind(username, fullName, role === 'capitan' ? 'moderador' : role, role === 'capitan' ? 1 : 0, await hashPassword(password, salt), salt).run();
         await log(db, ss, 'alta_usuario', `${username} (${role})`);
         return json({ username, password }, 201);
       }
@@ -480,11 +555,16 @@ export async function handle(req: Request, env: Env): Promise<Response> {
         if (!target) throw new HttpError(404, 'No encontrado');
         const b = await body(req);
         const self = target.id === ss.user.id;
+        const targetRole = effRole(target);
+        if (!actorAdmin && !self && (targetRole === 'admin' || targetRole === 'capitan'))
+          throw new HttpError(403, 'Solo el administrador puede modificar a administradores y capitanes');
         if (b.role !== undefined) {
           if (!ROLES.includes(b.role)) throw new HttpError(400, 'Rol no válido');
+          if (!actorAdmin && (b.role === 'admin' || b.role === 'capitan' || self)) throw new HttpError(403, 'Solo el administrador nombra administradores y capitanes');
           if (self && b.role !== 'admin') throw new HttpError(400, 'No puedes quitarte el rol de administrador');
-          await db.prepare('UPDATE users SET role = ? WHERE id = ?').bind(b.role, id).run();
-          await log(db, ss, 'cambio_rol', `${target.username}: ${target.role} → ${b.role}`);
+          await db.prepare('UPDATE users SET role = ?, captain = ? WHERE id = ?')
+            .bind(b.role === 'capitan' ? 'moderador' : b.role, b.role === 'capitan' ? 1 : 0, id).run();
+          await log(db, ss, 'cambio_rol', `${target.username}: ${targetRole} → ${b.role}`);
         }
         if (b.fullName !== undefined) {
           await db.prepare('UPDATE users SET full_name = ? WHERE id = ?').bind(str(b.fullName, 120, 'nombre', true), id).run();
@@ -509,7 +589,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
 
     // ----- bitácora de actividad (admin y maestros) -----
     if (area === 'activity' && m === 'GET') {
-      const ss = needReady(s); need(ss, ['admin', 'maestro']);
+      const ss = needReady(s); need(ss, ['admin', 'maestro', 'capitan']);
       const q = u.searchParams;
       const where: string[] = [`a.action <> 'login_fallido'`]; const args: unknown[] = [];
       if (q.get('user')) { where.push('a.username = ?'); args.push(q.get('user')); }
@@ -551,6 +631,62 @@ export async function handle(req: Request, env: Env): Promise<Response> {
       return json({ activity: rows.results });
     }
 
+    // ----- historial de versiones (solo el admin lo ve y restaura) -----
+    if (area === 'versions') {
+      const ss = needReady(s); need(ss, ['admin']);
+      if (!sub && m === 'GET') {
+        const rows = await db.prepare(`SELECT id, scope, ref, action, label, user_name, created_at, length(data) AS size
+          FROM versions ORDER BY id DESC LIMIT 60`).all();
+        return json({ versions: rows.results });
+      }
+      const vid = Number(sub);
+      if (vid && parts[2] === 'restore' && m === 'POST') {
+        const v = await db.prepare('SELECT * FROM versions WHERE id = ?').bind(vid).first();
+        if (!v) throw new HttpError(404, 'Versión no encontrada');
+        await restoreVersion(db, ss, v);
+        await log(db, ss, 'restauracion', `${v.scope} ${v.ref} · versión #${vid} (${v.created_at})`);
+        return json({ ok: true });
+      }
+    }
+
+    // ----- capitanes: perfil del semestre, su equipo y lo que quieren hacer -----
+    if (area === 'captain') {
+      const ss = needReady(s);
+      const role = ss.user.role as Role;
+      if (sub === 'people' && m === 'GET') {
+        need(ss, ['admin', 'capitan']);
+        const rows = await db.prepare(`SELECT id, full_name AS name, role, captain FROM users WHERE active = 1 AND role <> 'maestro' ORDER BY full_name`).all();
+        return json({ people: rows.results.map(r => ({ id: r.id, name: r.name, role: effRole(r) })) });
+      }
+      if (sub === 'all' && m === 'GET') {
+        need(ss, ['admin']);
+        const rows = await db.prepare(`SELECT c.*, u.full_name FROM captain_profiles c JOIN users u ON u.id = c.user_id ORDER BY u.full_name`).all();
+        return json({ profiles: rows.results.map(captainOut) });
+      }
+      if (!sub && m === 'GET') {
+        need(ss, ['admin', 'capitan']);
+        const row = await db.prepare(`SELECT c.*, u.full_name FROM captain_profiles c JOIN users u ON u.id = c.user_id WHERE c.user_id = ?`).bind(ss.user.id).first();
+        return json({ profile: row ? captainOut(row) : null });
+      }
+      if (!sub && m === 'PUT') {
+        if (role !== 'capitan') throw new HttpError(403, 'Solo los capitanes llenan este formulario');
+        const b = await body(req);
+        const semester = str(b.semester, 30, 'semestre', true);
+        const area2 = str(b.area, 200, '¿de qué eres capitán?', true);
+        const duties = str(b.duties, 4000, '¿qué tienes que hacer?', true);
+        const goals = str(b.goals, 4000, '¿qué quieres hacer en la página?', true);
+        const wants = Array.isArray(b.wants) ? b.wants.map((x: unknown) => String(x).slice(0, 80)).slice(0, 20) : [];
+        const team = Array.isArray(b.team) ? b.team.map(Number).filter((n: number) => Number.isInteger(n) && n > 0).slice(0, 40) : [];
+        await db.prepare(`INSERT INTO captain_profiles (user_id, semester, area, duties, goals, wants, team, updated_at)
+          VALUES (?,?,?,?,?,?,?,datetime('now'))
+          ON CONFLICT(user_id) DO UPDATE SET semester = excluded.semester, area = excluded.area, duties = excluded.duties,
+            goals = excluded.goals, wants = excluded.wants, team = excluded.team, updated_at = excluded.updated_at`)
+          .bind(ss.user.id, semester, area2, duties, goals, JSON.stringify(wants), JSON.stringify(team)).run();
+        await log(db, ss, 'perfil_capitan', `${semester} · ${area2} · equipo de ${team.length}`);
+        return json({ ok: true });
+      }
+    }
+
     // ----- asistente de IA (Workers AI), limitado por rol -----
     if (area === 'ai' && m === 'POST') {
       const ss = needReady(s);
@@ -568,8 +704,9 @@ export async function handle(req: Request, env: Env): Promise<Response> {
       let text = str(b.text, 12000, 'texto');
       const instruction = str(b.instruction, 600, 'instrucción');
       if (taskId === 'actividad') text = await activityDigest(db);
-      if (!text && !instruction) throw new HttpError(400, 'Escribe o selecciona el texto con el que quieres ayuda');
-      const answer = await runAi(env.AI, aiSystemPrompt(taskId), aiUserPrompt(text, instruction));
+      const extra = taskId === 'capitania' ? await captainContext(db, ss.user.id) : '';
+      if (!text && !instruction && taskId !== 'capitania') throw new HttpError(400, 'Escribe o selecciona el texto con el que quieres ayuda');
+      const answer = await runAi(env.AI, aiSystemPrompt(taskId) + extra, aiUserPrompt(text, instruction || (taskId === 'capitania' ? 'Propón un plan de acciones concretas para esta semana.' : '')));
       await log(db, ss, 'uso_ia', taskId);
       return json({ result: answer });
     }

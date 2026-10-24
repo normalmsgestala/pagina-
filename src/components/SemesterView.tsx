@@ -6,6 +6,11 @@ import {
   Compass, 
   Edit3, 
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+  Plus,
+  Save,
 } from 'lucide-react';
 
 interface SemesterViewProps {
@@ -15,7 +20,29 @@ interface SemesterViewProps {
   onAddNewModule: () => void;
   onEditModule: (mod: ModuleItem) => void;
   onUpdateEmergentVideo?: (video: EmergentTechTeamVideo) => void;
+  onMoveModule?: (id: string, dir: -1 | 1) => void;
+  onDeleteModule?: (id: string) => void;
+  onUpdateSemester?: (patch: Partial<Semester>) => void;
   isEditMode: boolean;
+}
+
+/** Editor del encabezado del semestre (solo en Modo edición). */
+function SemesterInfoEditor({ semester, onSave }: { semester: Semester; onSave: (p: Partial<Semester>) => void }) {
+  const [name, setName] = useState(semester.name);
+  const [title, setTitle] = useState(semester.projectIntegratorTitle || '');
+  const [purpose, setPurpose] = useState(semester.projectIntegratorPurpose || '');
+  const [saved, setSaved] = useState(false);
+  const cls = 'mt-1 w-full rounded-lg border border-stone-300 bg-white p-2 text-sm font-normal';
+  return <div className="space-y-3 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/50 p-5">
+    <p className="text-xs font-bold uppercase tracking-wider text-amber-900">Editar este semestre</p>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <label className="text-xs font-semibold text-stone-700">Nombre del semestre<input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} className={cls} /></label>
+      <label className="text-xs font-semibold text-stone-700">Título del proyecto integrador<input value={title} onChange={e => { setTitle(e.target.value); setSaved(false); }} className={cls} /></label>
+      <label className="text-xs font-semibold text-stone-700 sm:col-span-2">Propósito general<textarea rows={3} value={purpose} onChange={e => { setPurpose(e.target.value); setSaved(false); }} className={cls} /></label>
+    </div>
+    <button onClick={() => { onSave({ name: name.trim() || semester.name, projectIntegratorTitle: title, projectIntegratorPurpose: purpose }); setSaved(true); }}
+      className="inline-flex items-center gap-1.5 rounded-lg bg-stone-900 px-4 py-2 text-xs font-semibold text-white"><Save className="h-3.5 w-3.5" /> {saved ? 'Guardado' : 'Guardar cambios del semestre'}</button>
+  </div>;
 }
 
 export const SemesterView: React.FC<SemesterViewProps> = ({
@@ -23,9 +50,18 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
   onBackToHome,
   onSelectModule,
   onEditModule,
+  onAddNewModule,
   onUpdateEmergentVideo,
+  onMoveModule,
+  onDeleteModule,
+  onUpdateSemester,
   isEditMode
 }) => {
+  const addButton = isEditMode && (
+    <button onClick={onAddNewModule} className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-300 bg-white p-5 text-sm font-semibold text-amber-900 hover:bg-amber-50">
+      <Plus className="h-4 w-4" /> Agregar equipo o proyecto a este semestre
+    </button>
+  );
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [tempVideoUrl, setTempVideoUrl] = useState<string>('');
   const [tempVideoTitle, setTempVideoTitle] = useState<string>('');
@@ -49,6 +85,8 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
         </span>
       </div>
 
+      {isEditMode && onUpdateSemester && <SemesterInfoEditor key={semester.number} semester={semester} onSave={onUpdateSemester} />}
+
       {/* Semester Header */}
       {semester.modules.length === 0 ? (
         /* Blank State for Semesters 2 to 8 */
@@ -60,6 +98,7 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
             <p className="text-xs font-mono text-stone-400">Visualización de Semestre</p>
             <p className="text-xs text-stone-500">En blanco — Sin contenido integrado aún.</p>
           </div>
+          {addButton}
         </div>
       ) : (
         <div className="space-y-8">
@@ -109,7 +148,7 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
               </div>
 
               <div className="grid grid-cols-1 gap-4">
-                {semester.modules.map((mod) => {
+                {semester.modules.map((mod, index) => {
                   const hasSim = mod.simulatorConfig && mod.simulatorConfig.type !== 'none';
 
                   return (
@@ -173,22 +212,28 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
                           </span>
 
                           {isEditMode && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditModule(mod);
-                              }}
-                              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100"
-                              title="Editar"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <button onClick={() => onEditModule(mod)} className="p-1.5 rounded-lg text-stone-500 hover:text-stone-900 hover:bg-stone-100" title="Editar">
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button disabled={index === 0} onClick={() => onMoveModule?.(mod.id, -1)} className="p-1.5 rounded-lg text-stone-500 hover:text-stone-900 hover:bg-stone-100 disabled:opacity-30" title="Mover arriba">
+                                <ArrowUp className="w-4 h-4" />
+                              </button>
+                              <button disabled={index === semester.modules.length - 1} onClick={() => onMoveModule?.(mod.id, 1)} className="p-1.5 rounded-lg text-stone-500 hover:text-stone-900 hover:bg-stone-100 disabled:opacity-30" title="Mover abajo">
+                                <ArrowDown className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => { if (confirm(`¿Borrar «${mod.title}» de la página? El administrador puede recuperarlo desde las versiones anteriores.`)) onDeleteModule?.(mod.id); }}
+                                className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50" title="Borrar">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
                   );
                 })}
+                {addButton}
               </div>
             </div>
           )}

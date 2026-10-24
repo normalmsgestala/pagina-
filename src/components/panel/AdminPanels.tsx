@@ -20,6 +20,10 @@ export function UsersPanel({ me }: { me: User }) {
   const [msg, setMsg] = useState('');
   const [notice, setNotice] = useState<{ who: string; password: string } | null>(null);
   const [form, setForm] = useState({ fullName: '', username: '', role: 'editor' as Role });
+  const isAdmin = me.role === 'admin';
+  /** Un capitán no puede nombrar admins ni capitanes, ni modificar sus cuentas. */
+  const assignable = (r: Role) => isAdmin || (r !== 'admin' && r !== 'capitan');
+  const locked = (u: AdminUser) => !isAdmin && u.id !== me.id && (u.role === 'admin' || u.role === 'capitan');
   const load = useCallback(() => { api<{ users: AdminUser[] }>('users').then(r => setUsers(r.users)).catch(e => setMsg(e.message)); }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -50,14 +54,15 @@ export function UsersPanel({ me }: { me: User }) {
           <td className="p-3">{u.fullName}</td>
           <td className="p-3 font-mono text-xs">{u.username}</td>
           <td className="p-3">
-            <select value={u.role} disabled={u.id === me.id} onChange={e => patch(u, { role: e.target.value })} className="rounded border border-stone-300 p-1 text-xs">
-              {(Object.keys(ROLE_LABEL) as Role[]).map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+            <select value={u.role} disabled={u.id === me.id || locked(u)} onChange={e => patch(u, { role: e.target.value })} className="rounded border border-stone-300 p-1 text-xs">
+              {(Object.keys(ROLE_LABEL) as Role[]).filter(r => assignable(r) || r === u.role).map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
             </select>
           </td>
           <td className="whitespace-nowrap p-3 text-xs text-stone-500">{u.lastLogin ? formatDateTime(u.lastLogin) : 'Nunca'}</td>
           <td className="whitespace-nowrap p-3 text-xs">
-            <button onClick={() => confirm(`¿Restablecer la contraseña de ${u.fullName} a su nombre + «-leaf»?`) && patch(u, { resetPassword: true })} className="mr-3 inline-flex items-center gap-1 underline"><KeyRound size={12} /> Restablecer contraseña</button>
-            {u.id !== me.id && <button onClick={() => patch(u, { active: !u.active })} className="underline">{u.active ? 'Desactivar' : 'Activar'}</button>}
+            {!locked(u) && <><button onClick={() => confirm(`¿Restablecer la contraseña de ${u.fullName} a su nombre + «-leaf»?`) && patch(u, { resetPassword: true })} className="mr-3 inline-flex items-center gap-1 underline"><KeyRound size={12} /> Restablecer contraseña</button>
+            {u.id !== me.id && <button onClick={() => patch(u, { active: !u.active })} className="underline">{u.active ? 'Desactivar' : 'Activar'}</button>}</>}
+            {locked(u) && <span className="text-stone-400">Solo el administrador</span>}
           </td>
         </tr>)}</tbody>
       </table>
@@ -67,10 +72,10 @@ export function UsersPanel({ me }: { me: User }) {
       <input required placeholder="Nombre completo" value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} className="rounded-lg border border-stone-300 p-2 text-sm sm:col-span-2" />
       <input required placeholder="usuario (ej. maestra.lopez)" pattern="[a-z0-9._\-]{3,60}" value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase() })} className="rounded-lg border border-stone-300 p-2 text-sm" />
       <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as Role })} className="rounded-lg border border-stone-300 p-2 text-sm">
-        {(Object.keys(ROLE_LABEL) as Role[]).map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+        {(Object.keys(ROLE_LABEL) as Role[]).filter(assignable).map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
       </select>
       <button className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white sm:col-span-4 sm:justify-self-start">Crear usuario (contraseña: nombre-leaf)</button>
-      <p className="text-xs text-stone-500 sm:col-span-4"><strong>Administrador:</strong> todo y permisos. <strong>Moderador:</strong> aprueba envíos y edita la página. <strong>Editor:</strong> envía artículos, podcasts, documentos y evidencias según su equipo. <strong>Maestro:</strong> solo consulta la actividad para calificar.</p>
+      <p className="text-xs text-stone-500 sm:col-span-4"><strong>Administrador:</strong> todo, incluido restaurar versiones. <strong>Capitán:</strong> administra la página, envíos y compañeros (no puede restaurar versiones ni tocar a admins o capitanes). <strong>Moderador:</strong> aprueba envíos y edita la página. <strong>Editor:</strong> envía artículos, podcasts, documentos y evidencias según su equipo. <strong>Maestro:</strong> solo consulta la actividad para calificar.</p>
     </form>
   </div>;
 }

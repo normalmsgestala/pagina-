@@ -104,6 +104,27 @@ export default function App() {
     );
   };
 
+  const handleMoveModule = (id: string, dir: -1 | 1) => {
+    editCurriculum((prev) => prev.map((sem) => {
+      if (sem.number !== activeSemesterNum) return sem;
+      const mods = [...sem.modules];
+      const i = mods.findIndex((m) => m.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= mods.length) return sem;
+      [mods[i], mods[j]] = [mods[j], mods[i]];
+      return { ...sem, modules: mods.map((m, k) => ({ ...m, order: k + 1 })) };
+    }));
+  };
+
+  const handleDeleteModule = (id: string) => {
+    editCurriculum((prev) => prev.map((sem) => sem.number !== activeSemesterNum ? sem
+      : { ...sem, modules: sem.modules.filter((m) => m.id !== id).map((m, k) => ({ ...m, order: k + 1 })) }));
+  };
+
+  const handleUpdateSemester = (patch: Partial<Semester>) => {
+    editCurriculum((prev) => prev.map((sem) => (sem.number === activeSemesterNum ? { ...sem, ...patch } : sem)));
+  };
+
   const handleUpdateEmergentVideo = (updatedVideo: EmergentTechTeamVideo) => {
     editCurriculum((prev) =>
       prev.map((sem) => {
@@ -280,6 +301,9 @@ export default function App() {
             onAddNewModule={() => setIsAddingModule(true)}
             onEditModule={(mod) => setModuleToEdit(mod)}
             onUpdateEmergentVideo={handleUpdateEmergentVideo}
+            onMoveModule={handleMoveModule}
+            onDeleteModule={handleDeleteModule}
+            onUpdateSemester={handleUpdateSemester}
             isEditMode={isEditMode}
           />
         )}
