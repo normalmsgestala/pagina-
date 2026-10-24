@@ -139,7 +139,7 @@ export default function App() {
             className="text-left cursor-pointer focus:outline-hidden"
           >
             <span className="text-sm sm:text-base font-bold text-stone-900 font-display hover:text-amber-900 transition-colors">
-              Campus Circus LEAF
+              Campus LEAF
             </span>
           </button>
 
@@ -201,7 +201,7 @@ export default function App() {
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-bold text-stone-900 font-display tracking-tight text-balance leading-tight">
-                Campus Circus LEAF: la física se vuelve una aventura
+                Campus LEAF: la física se vuelve una aventura
               </h1>
 
               <p className="text-base sm:text-lg text-stone-600 leading-relaxed pt-2">

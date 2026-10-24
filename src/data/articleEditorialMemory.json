@@ -1,5 +1,5 @@
 {
-  "project": "Campus Circus LEAF · Artículos",
+  "project": "Campus LEAF · Artículos",
   "purpose": "Catálogo editorial del sitio y memoria de continuidad para crear, revisar y publicar artículos consecutivos.",
   "sequence": {
     "nextArticleNumber": "002",
@@ -7,7 +7,7 @@
     "rule": "Nunca reutilizar un número ya asignado. Antes de publicar, revisar este archivo y el catálogo visible del sitio."
   },
   "publicationPolicy": {
-    "destination": "Sección Artículos del sitio Campus Circus LEAF; no se prepara para envío a revista salvo solicitud expresa.",
+    "destination": "Sección Artículos del sitio Campus LEAF; no se prepara para envío a revista salvo solicitud expresa.",
     "language": "Español académico claro.",
     "evidence": "Las afirmaciones académicas deben sustentarse con fuentes específicas verificables. Distinguir hallazgos publicados, interpretación y aspectos provisionales.",
     "methodology": "En revisiones documentales, describir bases o repositorios consultados, términos de búsqueda, fechas, criterios de inclusión/exclusión, proceso de selección y método de análisis. No afirmar que una búsqueda se realizó si no se documentó.",
