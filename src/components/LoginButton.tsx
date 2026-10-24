@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Lock, LogIn, UserRound, X } from 'lucide-react';
-import { api, type User } from '../lib/api';
+import { api, isApprover, useApprovalCount, type User } from '../lib/api';
 
 const inputCls = 'mt-1 w-full rounded-lg border border-stone-300 bg-white p-3 text-sm focus:border-amber-600 focus:outline-none';
 
@@ -32,6 +32,7 @@ export function LoginForm({ onDone }: { onDone: () => void }) {
 export function LoginButton({ user: known }: { user?: User | null }) {
   const [user, setUser] = useState<User | null | undefined>(known);
   const [open, setOpen] = useState(false);
+  const approvals = useApprovalCount(isApprover(user?.role));
   useEffect(() => {
     if (known !== undefined) { setUser(known); return; }
     api<{ user: User | null }>('auth/me').then(r => setUser(r.user)).catch(() => setUser(null));
@@ -44,7 +45,8 @@ export function LoginButton({ user: known }: { user?: User | null }) {
   }, [open]);
 
   if (user) return <a href="/panel" className="inline-flex items-center gap-1.5 rounded-full bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-900">
-    <UserRound size={13} /> Mi panel</a>;
+    <UserRound size={13} /> Mi panel
+    {approvals.count > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-4 text-white" title="Aprobaciones pendientes">{approvals.count}</span>}</a>;
   return <>
     <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-900">
       <LogIn size={13} /> Iniciar sesión</button>

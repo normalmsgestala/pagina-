@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { INITIAL_CURRICULUM } from './data/defaultCurriculum';
-import { api, isMod, useSession } from './lib/api';
+import { api, isApprover, useSession } from './lib/api';
 import { ResourcesSection } from './components/ResourcesSection';
 import { LoginButton } from './components/LoginButton';
 import { Semester, ModuleItem, EmergentTechTeamVideo } from './types/curriculum';
@@ -20,7 +20,8 @@ export default function App() {
   // El contenido de los semestres se guarda en la base de datos (lo editan moderadores y admin).
   const [curriculum, setCurriculum] = useState<Semester[]>(INITIAL_CURRICULUM);
   const { user, ready: userReady } = useSession();
-  const canEdit = isMod(user?.role);
+  const canEdit = isApprover(user?.role);
+  const canContribute = !!user && user.role !== 'maestro';
   const dirty = useRef(false);
   const [saveState, setSaveState] = useState<'' | 'saving' | 'saved' | 'error'>('');
 
@@ -318,6 +319,7 @@ export default function App() {
             onSelectModule={(mod) => setSelectedModuleId(mod.id)}
             onEditModule={(mod) => setModuleToEdit(mod)}
             isEditMode={isEditMode}
+            canContribute={canContribute}
           />
         )}
       </main>

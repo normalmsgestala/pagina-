@@ -8,7 +8,7 @@ const TABS: { kind: Kind; label: string; icon: any; empty: string }[] = [
   { kind: 'evidencia', label: 'Evidencias', icon: Camera, empty: 'Mecánica y Logística todavía no han publicado evidencias.' },
 ];
 
-/** Biblioteca pública con lo aprobado por los moderadores. Si se pasa `moduleId`, filtra por ese proyecto. */
+/** Biblioteca pública con lo aprobado por los capitanes. Si se pasa `moduleId`, filtra por ese proyecto. */
 export function ResourcesSection({ moduleId, compact }: { moduleId?: string; compact?: boolean }) {
   const all = usePublicPosts();
   const [tab, setTab] = useState<Kind>('documento');
@@ -20,7 +20,7 @@ export function ResourcesSection({ moduleId, compact }: { moduleId?: string; com
     {!compact && <div>
       <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-800"><FolderOpen size={15} /> Biblioteca del grupo</p>
       <h2 className="mt-2 font-display text-2xl font-bold">Documentos, fuentes y evidencias</h2>
-      <p className="mt-1 text-sm text-stone-500">Material que suben los equipos y aprueban los moderadores.</p>
+      <p className="mt-1 text-sm text-stone-500">Material que suben los equipos y aprueban los capitanes.</p>
     </div>}
     {compact && <h3 className="text-sm font-bold text-stone-800">Material compartido por los equipos</h3>}
     <div className="flex flex-wrap gap-2">

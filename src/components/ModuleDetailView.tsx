@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ModuleItem } from '../types/curriculum';
 import { ResourcesSection } from './ResourcesSection';
+import { ContributeButton } from './panel/Proposals';
 import { RollerCoasterSimulator } from './simulators/RollerCoasterSimulator';
 import { FlyingChairsSimulator } from './simulators/FlyingChairsSimulator';
 import { SwingingShipSimulator } from './simulators/SwingingShipSimulator';
@@ -26,6 +27,7 @@ interface ModuleDetailViewProps {
   onSelectModule: (mod: ModuleItem) => void;
   onEditModule: (mod: ModuleItem) => void;
   isEditMode: boolean;
+  canContribute?: boolean;
 }
 
 export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
@@ -35,7 +37,8 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
   onBackToSemester,
   onSelectModule,
   onEditModule,
-  isEditMode
+  isEditMode,
+  canContribute
 }) => {
   const simType = module.simulatorConfig?.type || 'none';
   const hasSimulator = simType !== 'none';
@@ -342,9 +345,10 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
                       </div>
                     )}
                   </div>
-                  <span className="text-[11px] font-mono text-stone-400 shrink-0">
-                    Apartado {sec.number}
-                  </span>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <span className="text-[11px] font-mono text-stone-400">Apartado {sec.number}</span>
+                    {canContribute && <ContributeButton moduleId={module.id} sectionId={sec.id} sectionTitle={sec.title} />}
+                  </div>
                 </div>
 
                 {/* Content Area (Blank unless user filled it in Edit Mode) */}

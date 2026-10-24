@@ -36,6 +36,6 @@ export function CalendarSection() {
         </div>
       </details>)}
     </div>
-    <p className="text-xs text-stone-400">Las fechas las agregan los equipos de Mecánica y Logística desde el panel; se publican al aprobarlas un moderador.</p>
+    <p className="text-xs text-stone-400">Las fechas las agregan los equipos de Mecánica y Logística desde el panel; se publican al aprobarlas un capitán.</p>
   </section>;
 }

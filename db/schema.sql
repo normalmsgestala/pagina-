@@ -108,3 +108,23 @@ CREATE TABLE IF NOT EXISTS captain_profiles (
   team TEXT NOT NULL DEFAULT '[]',
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Aportes de estudiantes a los apartados: la IA los junta con lo que ya hay y un capitán aprueba
+CREATE TABLE IF NOT EXISTS proposals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  module_id TEXT NOT NULL,
+  field TEXT NOT NULL,
+  section_title TEXT NOT NULL DEFAULT '',
+  module_title TEXT NOT NULL DEFAULT '',
+  before TEXT NOT NULL DEFAULT '',
+  contribution TEXT NOT NULL,
+  after TEXT NOT NULL,
+  merged_by_ai INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  author_id INTEGER NOT NULL REFERENCES users(id),
+  reviewer_id INTEGER REFERENCES users(id),
+  review_note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  reviewed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status, id);

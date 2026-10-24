@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Check, X, ExternalLink, Trash2, RefreshCw, Sparkles, Loader2 } from 'lucide-react';
+import { PendingProposals, MyProposals } from './Proposals';
 import { api, aiRun, formatDate, formatDateTime, KIND_LABEL, STATUS_LABEL, TEAM_LABEL, type CalendarEvent, type Post, type Team } from '../../lib/api';
 
 const badge: Record<string, string> = {
@@ -55,7 +56,7 @@ function ReviewWithAi({ text, onUseNote }: { text: string; onUseNote: (n: string
   </div>;
 }
 
-export function ModerationPanel() {
+export function ModerationPanel({ onChange }: { onChange?: () => void } = {}) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [view, setView] = useState<'pending' | 'all'>('pending');
@@ -68,7 +69,8 @@ export function ModerationPanel() {
       setPosts(p.posts);
       setEvents(view === 'pending' ? e.events.filter(x => x.status === 'pending') : e.events);
     } catch (err: any) { setMsg(err.message); }
-  }, [view]);
+    onChange?.();
+  }, [view, onChange]);
   useEffect(() => { load(); }, [load]);
 
   const act = async (path: string, method: 'PATCH' | 'DELETE', action?: string, key?: string) => {
@@ -88,7 +90,9 @@ export function ModerationPanel() {
       <button onClick={load} className="ml-auto inline-flex items-center gap-1 text-xs text-stone-500"><RefreshCw size={13} /> Actualizar</button>
     </div>
     {msg && <p className="text-sm text-amber-800">{msg}</p>}
-    {total === 0 && <p className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">No hay envíos {view === 'pending' ? 'pendientes' : ''}.</p>}
+    {view === 'pending' && <PendingProposals onChange={onChange} />}
+    {(posts.length > 0 || events.length > 0) && <p className="text-sm font-semibold text-stone-800">Envíos y fechas ({total})</p>}
+    {total === 0 && <p className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">No hay envíos ni fechas {view === 'pending' ? 'pendientes' : ''}.</p>}
     {posts.map(p => {
       const key = 'p' + p.id;
       return <details key={key} className="group rounded-xl border border-stone-200 bg-white" open={view === 'pending' && posts.length < 4}>
@@ -147,8 +151,8 @@ export function MySubmissions() {
   };
   if (error) return <p className="text-sm text-red-700">{error}</p>;
   if (!posts) return <p className="text-sm text-stone-500">Cargando…</p>;
-  if (!posts.length) return <p className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">Todavía no has enviado nada.</p>;
-  return <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
+  if (!posts.length) return <div className="space-y-4"><MyProposals /><p className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">Todavía no has enviado artículos, podcasts ni evidencias.</p></div>;
+  return <div className="space-y-4"><MyProposals /><div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
     <table className="w-full text-left text-sm">
       <thead className="bg-stone-50 text-xs uppercase text-stone-500"><tr><th className="p-3">Tipo</th><th className="p-3">Título</th><th className="p-3">Enviado</th><th className="p-3">Estado</th><th className="p-3"></th></tr></thead>
       <tbody>{posts.map(p => <tr key={p.id} className="border-t border-stone-100 align-top">
@@ -159,5 +163,5 @@ export function MySubmissions() {
         <td className="p-3">{p.status !== 'approved' && <button onClick={() => remove(p.id)} className="text-xs text-red-700 underline">Eliminar</button>}</td>
       </tr>)}</tbody>
     </table>
-  </div>;
+  </div></div>;
 }

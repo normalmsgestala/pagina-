@@ -1,4 +1,4 @@
-import { Semester, GuideSection } from '../types/curriculum';
+import type { Semester, GuideSection } from '../types/curriculum';
 
 const createDefaultGuideSections = (teamSpecificSubtitle: string): GuideSection[] => [
   {

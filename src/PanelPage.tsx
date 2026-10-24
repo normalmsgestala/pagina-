@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, LogOut, FlaskConical, Wrench, Truck, KeyRound, CheckCircle2 } from 'lucide-react';
-import { api, isMod, isLeader, AI_TASKS_BY_ROLE, ROLE_DUTIES, ROLE_LABEL, TEAM_DUTIES, TEAM_LABEL, type Team, type User } from './lib/api';
+import { api, isMod, isLeader, isApprover, useApprovalCount, AI_TASKS_BY_ROLE, ROLE_DUTIES, ROLE_LABEL, TEAM_DUTIES, TEAM_LABEL, type Team, type User } from './lib/api';
 import { useSession } from './lib/api';
 import { LoginForm } from './components/LoginButton';
 import { SubmitPanel } from './components/panel/SubmitForms';
@@ -8,6 +8,7 @@ import { ModerationPanel, MySubmissions } from './components/panel/Moderation';
 import { UsersPanel, ActivityPanel } from './components/panel/AdminPanels';
 import { ActivityChart } from './components/panel/ActivityChart';
 import { AiAssist } from './components/panel/AiAssist';
+import { HistoryPanel } from './components/panel/Proposals';
 import { CaptainWizard, CaptainTab, CaptainsOverview, VersionsPanel, useCaptainProfile } from './components/panel/CaptainPanels';
 
 const TEAMS: { id: Team; icon: any }[] = [
@@ -74,7 +75,7 @@ function TeamPicker({ onPick }: { onPick: (t: Team) => void }) {
 }
 
 /** Pestaña de inicio: qué hace cada quien, accesos rápidos y la gráfica del grupo. */
-function Home({ user, team, go }: { user: User; team: Team | ''; go: (t: Tab) => void }) {
+function Home({ user, team, go, pending }: { user: User; team: Team | ''; go: (t: Tab) => void; pending: number }) {
   return <div className="space-y-6">
     <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
       <section className="rounded-2xl border border-stone-200 bg-white p-5">
@@ -85,8 +86,8 @@ function Home({ user, team, go }: { user: User; team: Team | ''; go: (t: Tab) =>
         </ul>
         <div className="mt-4 flex flex-wrap gap-2">
           {user.role !== 'maestro' && <button onClick={() => go('publicar')} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white">Publicar algo</button>}
-          {isMod(user.role) && <button onClick={() => go('moderar')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Revisar envíos</button>}
-          {isMod(user.role) && <a href="/" className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Editar la página (Modo edición)</a>}
+          {isApprover(user.role) && <button onClick={() => go('moderar')} className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Aprobaciones{pending > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white">{pending}</span>}</button>}
+          {isApprover(user.role) && <a href="/" className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Editar la página (Modo edición)</a>}
           {user.role === 'capitan' && <button onClick={() => go('capitania')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Mi capitanía</button>}
           {user.role === 'admin' && <button onClick={() => go('versiones')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Versiones anteriores</button>}
           {(user.role === 'admin' || user.role === 'maestro' || user.role === 'capitan') && <button onClick={() => go('actividad')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Actividad y calificaciones</button>}
@@ -112,11 +113,12 @@ function AiTab({ user }: { user: User }) {
   return <div className="max-w-3xl"><AiAssist tasks={tasks} hint={hint} title="Asistente de IA" allowEmptyText={user.role === 'capitan'} /></div>;
 }
 
-type Tab = 'inicio' | 'publicar' | 'mios' | 'moderar' | 'ia' | 'capitania' | 'usuarios' | 'actividad' | 'versiones' | 'capitanes' | 'cuenta';
+type Tab = 'inicio' | 'publicar' | 'mios' | 'moderar' | 'ia' | 'capitania' | 'usuarios' | 'actividad' | 'historial' | 'versiones' | 'capitanes' | 'cuenta';
 
 export default function PanelPage() {
   const { user, team, ready, refresh, setTeam } = useSession();
   const captain = useCaptainProfile(user?.role === 'capitan');
+  const approvals = useApprovalCount(isApprover(user?.role));
   const [picking, setPicking] = useState(false);
   const [tab, setTab] = useState<Tab>('inicio');
   const [error, setError] = useState('');
@@ -138,11 +140,12 @@ export default function PanelPage() {
 
   const tabs: [Tab, string][] = [['inicio', 'Inicio']];
   if (user.role !== 'maestro') tabs.push(['publicar', 'Publicar'], ['mios', 'Mis envíos']);
-  if (isMod(user.role)) tabs.push(['moderar', 'Moderación'], ['ia', 'Asistente de IA']);
+  if (isApprover(user.role)) tabs.push(['moderar', 'Aprobaciones']);
+  if (isMod(user.role)) tabs.push(['ia', 'Asistente de IA']);
   if (user.role === 'capitan') tabs.push(['capitania', 'Mi capitanía']);
   if (isLeader(user.role)) tabs.push(['usuarios', 'Usuarios y permisos']);
   if (user.role === 'admin' || user.role === 'maestro' || user.role === 'capitan') tabs.push(['actividad', 'Actividad y calificaciones']);
-  if (user.role === 'admin') tabs.push(['versiones', 'Versiones anteriores'], ['capitanes', 'Capitanes']);
+  if (user.role === 'admin') tabs.push(['historial', 'Historial de la página'], ['versiones', 'Versiones anteriores'], ['capitanes', 'Capitanes']);
   tabs.push(['cuenta', 'Mi cuenta']);
   const current = tabs.some(([t]) => t === tab) ? tab : 'inicio';
 
@@ -153,16 +156,18 @@ export default function PanelPage() {
     </div>
     <nav className="flex flex-wrap gap-2 border-b border-stone-200 pb-3">
       {tabs.map(([t, l]) => <button key={t} onClick={() => setTab(t)}
-        className={`rounded-full px-4 py-2 text-sm ${current === t ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-200'}`}>{l}</button>)}
+        className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm ${current === t ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-200'}`}>{l}
+        {t === 'moderar' && approvals.count > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[11px] font-bold leading-5 text-white" aria-label={`${approvals.count} pendientes`}>{approvals.count}</span>}</button>)}
     </nav>
-    {current === 'inicio' && <Home user={user} team={team} go={setTab} />}
+    {current === 'inicio' && <Home user={user} team={team} go={setTab} pending={approvals.count} />}
     {current === 'publicar' && <SubmitPanel user={user} team={team} />}
     {current === 'mios' && <MySubmissions />}
-    {current === 'moderar' && <ModerationPanel />}
+    {current === 'moderar' && <ModerationPanel onChange={approvals.refresh} />}
     {current === 'ia' && <AiTab user={user} />}
     {current === 'usuarios' && <UsersPanel me={user} />}
     {current === 'actividad' && <ActivityPanel />}
     {current === 'capitania' && captain.profile && <CaptainTab me={user} profile={captain.profile} onChanged={captain.reload} />}
+    {current === 'historial' && <HistoryPanel />}
     {current === 'versiones' && <VersionsPanel />}
     {current === 'capitanes' && <CaptainsOverview />}
     {current === 'cuenta' && <ChangePassword />}

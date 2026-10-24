@@ -31,6 +31,32 @@ export const CALENDAR_TEAMS: Team[] = ['mecanica', 'logistica'];
 export const isMod = (r?: Role | null) => r === 'admin' || r === 'capitan' || r === 'moderador';
 /** Admin y capitanes: administran la página, usuarios y actividad. */
 export const isLeader = (r?: Role | null) => r === 'admin' || r === 'capitan';
+/** Solo admin y capitanes aprueban lo que se sube y editan la página directamente. */
+export const isApprover = isLeader;
+
+export interface Proposal {
+  id: number; moduleId: string; field: string; sectionTitle: string; moduleTitle: string;
+  before: string; contribution: string; after: string; mergedByAi: boolean; status: Status;
+  authorId: number; authorName: string; reviewerName: string; reviewNote: string; createdAt: string; reviewedAt: string | null;
+}
+
+/** Número de aprobaciones pendientes (solo para capitanes y admin); se actualiza cada minuto. */
+export function useApprovalCount(enabled: boolean) {
+  const [count, setCount] = useState(0);
+  const refresh = useCallback(() => {
+    if (!enabled) { setCount(0); return; }
+    api<{ count: number }>('approvals/count').then(r => setCount(r.count)).catch(() => {});
+  }, [enabled]);
+  useEffect(() => {
+    refresh();
+    if (!enabled) return;
+    const t = setInterval(refresh, 60000);
+    return () => clearInterval(t);
+  }, [refresh, enabled]);
+  return { count, refresh };
+}
+
+export const CONSISTENCY_NOTE = 'Lo que subas debe concordar con lo que ya está en la página: mismo tema, mismos datos y sin contradecir lo publicado. La IA junta tu aporte con el contenido existente sin agregar información nueva, y un capitán revisa el antes y el después antes de publicarlo.';
 
 export class ApiError extends Error {
   status: number;
@@ -144,13 +170,14 @@ export const ROLE_DUTIES: Record<Role, string[]> = {
   admin: ['Crear usuarios, cambiar roles y restablecer contraseñas.', 'Aprobar o rechazar todo lo que envían los equipos.',
     'Editar cualquier parte de la página con el «Modo edición».', 'Mover y configurar la gráfica de conexiones y trabajos.',
     'Consultar y descargar la actividad para calificar.', 'Usar la IA para cualquier tarea de la página.'],
-  capitan: ['Editar, mover, agregar y borrar contenido de la página con el «Modo edición».',
-    'Aprobar o rechazar todo lo que envían los equipos y publicar directamente.', 'Gestionar a los compañeros (excepto administrador y capitanes) y ver la actividad.',
+  capitan: ['Aprobar o rechazar los aportes y envíos de tus compañeros viendo el antes y el después (pestaña «Aprobaciones»).',
+    'Editar, mover, agregar y borrar contenido de la página con el «Modo edición».', 'Gestionar a los compañeros (excepto administrador y capitanes) y ver la actividad.',
     'Usar la IA para planear tu capitanía y modificar la página según lo que redactaste.',
     'Si algo sale mal, el administrador puede restaurar cualquiera de las últimas 10 versiones.'],
-  moderador: ['Revisar, aprobar o rechazar los envíos de los editores.', 'Editar módulos y textos de la página con el «Modo edición».',
-    'Publicar directamente artículos, podcasts, documentos y evidencias.', 'Usar la IA para revisar envíos y redactar textos de la página.'],
-  editor: ['Enviar contenido según tu equipo; un moderador lo revisa antes de publicarse.', 'Ver el estado de tus envíos en «Mis envíos».',
+  moderador: ['Aportar a los apartados de la página; la IA junta tu aporte y un capitán lo aprueba.',
+    'Enviar artículos, podcasts, documentos y evidencias; un capitán los aprueba.', 'Usar la IA para revisar textos y redactar contenido de la página.'],
+  editor: ['Aportar a los apartados de cada proyecto con el botón «Aportar a este apartado».',
+    'Enviar contenido según tu equipo; un capitán lo revisa antes de publicarse.', 'Ver el estado de tus envíos en «Mis envíos».',
     'Usar la IA solo para corregir y mejorar tu propio trabajo.'],
   maestro: ['Consultar la actividad de cada estudiante.', 'Descargar el registro para Excel y apoyar la calificación.'],
 };

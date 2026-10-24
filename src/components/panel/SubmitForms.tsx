@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Mic, FolderOpen, BookMarked, Camera, CalendarPlus, Send, CheckCircle2 } from 'lucide-react';
 import { INITIAL_CURRICULUM } from '../../data/defaultCurriculum';
-import { api, apaReference, isMod, KINDS_BY_TEAM, CALENDAR_TEAMS, KIND_LABEL, type AiTask, type Kind, type Role, type Team, type User } from '../../lib/api';
+import { api, apaReference, CONSISTENCY_NOTE, isMod, KINDS_BY_TEAM, CALENDAR_TEAMS, KIND_LABEL, type AiTask, type Kind, type Role, type Team, type User } from '../../lib/api';
 import { AiAssist } from './AiAssist';
 
 type FormKind = Kind | 'calendario';
@@ -55,7 +55,7 @@ export function SubmitPanel({ user, team }: { user: User; team: Team | '' }) {
     {done && <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
       <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
       <div><strong>{done.kind === 'calendario' ? 'Fecha enviada.' : KIND_LABEL[done.kind as Kind] + ' enviado.'}</strong>{' '}
-        {done.status === 'approved' ? 'Ya está publicado en la página.' : 'Un moderador lo revisará antes de publicarlo. Puedes ver su estado en "Mis envíos".'}</div>
+        {done.status === 'approved' ? 'Ya está publicado en la página.' : 'Un capitán lo revisará antes de publicarlo. Puedes ver su estado en "Mis envíos".'}</div>
     </div>}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {forms.map(k => {
@@ -107,6 +107,7 @@ function FormFor({ kind, user, onDone }: { kind: FormKind; user: User; onDone: (
   </Field>;
 
   return <form onSubmit={submit} className="space-y-5 rounded-2xl border border-stone-200 bg-white p-5 sm:p-7">
+    <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{CONSISTENCY_NOTE.replace('La IA junta tu aporte con el contenido existente sin agregar información nueva, y un capitán', 'Un capitán')}</p>
     <h3 className="font-serif text-2xl">{kind === 'calendario' ? 'Nueva fecha en el calendario' : 'Nuevo ' + KIND_LABEL[kind as Kind].toLowerCase()}</h3>
 
     {kind === 'articulo' && <div className="grid gap-4 sm:grid-cols-2">
@@ -189,7 +190,7 @@ function FormFor({ kind, user, onDone }: { kind: FormKind; user: User; onDone: (
     {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     <div className="flex flex-wrap items-center gap-3">
       <button disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-900 disabled:opacity-50">
-        <Send size={15} /> {busy ? 'Enviando…' : isMod(user.role) ? 'Publicar' : 'Enviar a revisión'}</button>
+        <Send size={15} /> {busy ? 'Enviando…' : user.role === 'admin' || user.role === 'capitan' ? 'Publicar' : 'Enviar a revisión'}</button>
       <span className="text-xs text-stone-500">Los campos con * son obligatorios.</span>
     </div>
   </form>;
