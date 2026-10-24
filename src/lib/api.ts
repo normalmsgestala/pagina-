@@ -117,3 +117,38 @@ export const ACTION_LABEL: Record<string, string> = {
   eliminacion: 'Eliminó', edicion_pagina: 'Editó la página', alta_usuario: 'Creó usuario', cambio_rol: 'Cambió rol',
   reinicio_contrasena: 'Reinició contraseña', activacion_usuario: 'Activó usuario', desactivacion_usuario: 'Desactivó usuario',
 };
+
+// ---------- IA ----------
+export type AiTask = 'corregir' | 'mejorar' | 'resumir' | 'palabras_clave' | 'apa' | 'sugerencias' | 'revisar' | 'pagina' | 'libre' | 'actividad';
+export const AI_TASK_LABEL: Record<AiTask, string> = {
+  corregir: 'Corregir ortografía', mejorar: 'Mejorar redacción', resumir: 'Hacer resumen', palabras_clave: 'Sugerir palabras clave',
+  apa: 'Formato APA', sugerencias: 'Darme sugerencias', revisar: 'Revisar envío', pagina: 'Redactar texto de la página',
+  libre: 'Pedir cualquier cosa', actividad: 'Informe de actividad para calificar',
+};
+/** Tareas que puede usar cada rol (el servidor vuelve a validarlo). */
+export const AI_TASKS_BY_ROLE: Record<Role, AiTask[]> = {
+  editor: ['corregir', 'mejorar', 'resumir', 'palabras_clave', 'apa', 'sugerencias'],
+  moderador: ['corregir', 'mejorar', 'resumir', 'palabras_clave', 'apa', 'sugerencias', 'revisar', 'pagina'],
+  admin: ['corregir', 'mejorar', 'resumir', 'palabras_clave', 'apa', 'sugerencias', 'revisar', 'pagina', 'libre', 'actividad'],
+  maestro: [],
+};
+/** Tareas cuyo resultado reemplaza el texto (las demás solo se muestran). */
+export const AI_REPLACES: AiTask[] = ['corregir', 'mejorar', 'resumir', 'palabras_clave', 'apa', 'pagina'];
+export const aiRun = (task: AiTask, text: string, instruction = '') =>
+  api<{ result: string }>('ai', { body: { task, text, instruction } }).then(r => r.result);
+
+export const ROLE_DUTIES: Record<Role, string[]> = {
+  admin: ['Crear usuarios, cambiar roles y restablecer contraseñas.', 'Aprobar o rechazar todo lo que envían los equipos.',
+    'Editar cualquier parte de la página con el «Modo edición».', 'Mover y configurar la gráfica de conexiones y trabajos.',
+    'Consultar y descargar la actividad para calificar.', 'Usar la IA para cualquier tarea de la página.'],
+  moderador: ['Revisar, aprobar o rechazar los envíos de los editores.', 'Editar módulos y textos de la página con el «Modo edición».',
+    'Publicar directamente artículos, podcasts, documentos y evidencias.', 'Usar la IA para revisar envíos y redactar textos de la página.'],
+  editor: ['Enviar contenido según tu equipo; un moderador lo revisa antes de publicarse.', 'Ver el estado de tus envíos en «Mis envíos».',
+    'Usar la IA solo para corregir y mejorar tu propio trabajo.'],
+  maestro: ['Consultar la actividad de cada estudiante.', 'Descargar el registro para Excel y apoyar la calificación.'],
+};
+export const TEAM_DUTIES: Record<Team, string> = {
+  investigacion: 'Subes documentación, artículos, podcasts y fuentes bibliográficas.',
+  mecanica: 'Subes evidencias del trabajo, artículos y podcasts, y actualizas el calendario.',
+  logistica: 'Subes evidencias del trabajo, artículos y podcasts, y actualizas el calendario.',
+};

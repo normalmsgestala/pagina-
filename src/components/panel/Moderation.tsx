@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, X, ExternalLink, Trash2, RefreshCw } from 'lucide-react';
-import { api, formatDate, formatDateTime, KIND_LABEL, STATUS_LABEL, TEAM_LABEL, type CalendarEvent, type Post, type Team } from '../../lib/api';
+import { Check, X, ExternalLink, Trash2, RefreshCw, Sparkles, Loader2 } from 'lucide-react';
+import { api, aiRun, formatDate, formatDateTime, KIND_LABEL, STATUS_LABEL, TEAM_LABEL, type CalendarEvent, type Post, type Team } from '../../lib/api';
 
 const badge: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-900', approved: 'bg-emerald-100 text-emerald-900', rejected: 'bg-red-100 text-red-800',
@@ -25,6 +25,33 @@ function PostDetail({ p }: { p: Post }) {
     {p.kind === 'evidencia' && <p className="text-xs">Fecha: {formatDate(d.date)} {d.participants && '· ' + d.participants}</p>}
     {[p.url, ...links.filter(l => l !== p.url)].filter(Boolean).map(l =>
       <a key={l} href={l} target="_blank" rel="noreferrer" className="flex items-center gap-1 break-all text-xs text-amber-800 underline"><ExternalLink size={12} /> {l}</a>)}
+  </div>;
+}
+
+
+/** Texto plano de un envío para que la IA lo revise. */
+function postAsText(p: Post) {
+  const d = p.data || {};
+  return [`Tipo: ${KIND_LABEL[p.kind]}`, `Título: ${p.title}`, p.summary && `Resumen/descripción: ${p.summary}`,
+    d.keywords && `Palabras clave: ${d.keywords}`, d.intro && `Introducción: ${d.intro}`, d.body && `Desarrollo: ${d.body}`,
+    d.conclusion && `Conclusiones: ${d.conclusion}`, Array.isArray(d.references) && d.references.length && `Referencias: ${d.references.join(' | ')}`,
+    d.apa && `Referencia: ${d.apa}`, p.url && `Enlace: ${p.url}`, Array.isArray(d.links) && d.links.length && `Enlaces: ${d.links.join(' ')}`,
+  ].filter(Boolean).join('\n');
+}
+
+function ReviewWithAi({ text, onUseNote }: { text: string; onUseNote: (n: string) => void }) {
+  const [out, setOut] = useState(''); const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
+  const run = async () => { setBusy(true); setErr(''); try { setOut(await aiRun('revisar', text)); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } };
+  const note = (out.split(/Comentario para el autor:/i)[1] || '').trim();
+  return <div className="space-y-2">
+    <button type="button" onClick={run} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-900 disabled:opacity-50">
+      {busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />} Revisar con IA</button>
+    {err && <p className="text-xs text-red-700">{err}</p>}
+    {out && <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-3 text-xs">
+      <p className="whitespace-pre-line text-stone-800">{out}</p>
+      {note && <button type="button" onClick={() => onUseNote(note)} className="mt-2 underline text-violet-900">Usar como comentario para el autor</button>}
+      <p className="mt-1 text-[11px] text-stone-500">Sugerencia de la IA; la decisión es tuya.</p>
+    </div>}
   </div>;
 }
 
@@ -72,6 +99,7 @@ export function ModerationPanel() {
         </summary>
         <div className="space-y-3 border-t border-stone-100 p-4">
           <PostDetail p={p} />
+          {p.status !== 'approved' && <ReviewWithAi text={postAsText(p)} onUseNote={n => setNotes(s => ({ ...s, [key]: n }))} />}
           <Actions status={p.status} note={notes[key] || ''} setNote={n => setNotes(s => ({ ...s, [key]: n }))}
             onApprove={() => act('posts/' + p.id, 'PATCH', 'approve', key)} onReject={() => act('posts/' + p.id, 'PATCH', 'reject', key)}
             onDelete={() => act('posts/' + p.id, 'DELETE')} />

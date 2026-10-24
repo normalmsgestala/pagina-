@@ -7,10 +7,10 @@ type AdminUser = User & { active: boolean; lastLogin: string | null };
 /** Muestra una contraseña recién generada para que el admin la copie y la entregue. */
 function PasswordNotice({ who, password, onClose }: { who: string; password: string; onClose: () => void }) {
   return <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
-    <p>Contraseña temporal de <strong>{who}</strong>:</p>
+    <p>Contraseña de <strong>{who}</strong>:</p>
     <div className="mt-2 flex items-center gap-2"><code className="rounded bg-white px-3 py-1.5 text-base font-bold">{password}</code>
       <button onClick={() => navigator.clipboard?.writeText(password)} className="inline-flex items-center gap-1 text-xs underline"><Copy size={13} /> Copiar</button></div>
-    <p className="mt-2 text-xs text-stone-600">Entrégala en persona. Se pedirá cambiarla al entrar. No se volverá a mostrar.</p>
+    <p className="mt-2 text-xs text-stone-600">Es su primer nombre + «-leaf». Puede cambiarla en «Mi cuenta» dentro de su panel.</p>
     <button onClick={onClose} className="mt-2 text-xs underline">Cerrar</button>
   </div>;
 }
@@ -47,7 +47,7 @@ export function UsersPanel({ me }: { me: User }) {
         <thead className="bg-stone-50 text-xs uppercase text-stone-500"><tr>
           <th className="p-3">Nombre</th><th className="p-3">Usuario</th><th className="p-3">Rol</th><th className="p-3">Último acceso</th><th className="p-3">Acciones</th></tr></thead>
         <tbody>{users.map(u => <tr key={u.id} className={`border-t border-stone-100 ${u.active ? '' : 'opacity-50'}`}>
-          <td className="p-3">{u.fullName}{u.mustChange && <span className="ml-2 text-[11px] text-amber-700">(contraseña temporal)</span>}</td>
+          <td className="p-3">{u.fullName}</td>
           <td className="p-3 font-mono text-xs">{u.username}</td>
           <td className="p-3">
             <select value={u.role} disabled={u.id === me.id} onChange={e => patch(u, { role: e.target.value })} className="rounded border border-stone-300 p-1 text-xs">
@@ -56,7 +56,7 @@ export function UsersPanel({ me }: { me: User }) {
           </td>
           <td className="whitespace-nowrap p-3 text-xs text-stone-500">{u.lastLogin ? formatDateTime(u.lastLogin) : 'Nunca'}</td>
           <td className="whitespace-nowrap p-3 text-xs">
-            <button onClick={() => confirm(`¿Generar nueva contraseña para ${u.fullName}?`) && patch(u, { resetPassword: true })} className="mr-3 inline-flex items-center gap-1 underline"><KeyRound size={12} /> Nueva contraseña</button>
+            <button onClick={() => confirm(`¿Restablecer la contraseña de ${u.fullName} a su nombre + «-leaf»?`) && patch(u, { resetPassword: true })} className="mr-3 inline-flex items-center gap-1 underline"><KeyRound size={12} /> Restablecer contraseña</button>
             {u.id !== me.id && <button onClick={() => patch(u, { active: !u.active })} className="underline">{u.active ? 'Desactivar' : 'Activar'}</button>}
           </td>
         </tr>)}</tbody>
@@ -69,7 +69,7 @@ export function UsersPanel({ me }: { me: User }) {
       <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as Role })} className="rounded-lg border border-stone-300 p-2 text-sm">
         {(Object.keys(ROLE_LABEL) as Role[]).map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
       </select>
-      <button className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white sm:col-span-4 sm:justify-self-start">Crear y generar contraseña</button>
+      <button className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white sm:col-span-4 sm:justify-self-start">Crear usuario (contraseña: nombre-leaf)</button>
       <p className="text-xs text-stone-500 sm:col-span-4"><strong>Administrador:</strong> todo y permisos. <strong>Moderador:</strong> aprueba envíos y edita la página. <strong>Editor:</strong> envía artículos, podcasts, documentos y evidencias según su equipo. <strong>Maestro:</strong> solo consulta la actividad para calificar.</p>
     </form>
   </div>;

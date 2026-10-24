@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatDate, usePublicPosts, youtubeId } from './lib/api';
+import { LoginButton } from './components/LoginButton';
 import { ArrowLeft, Headphones, PlayCircle, Mic2, BarChart3 } from 'lucide-react';
 
 const podcastSections = [
@@ -15,7 +16,7 @@ export default function PodcastPage() {
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
         <a href="/" className="font-serif text-xl font-semibold tracking-wide">LEAF <span className="text-sm font-normal text-amber-800">2026—2030</span></a>
-        <a href="/" className="flex items-center gap-2 text-sm text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver al Campus</a>
+        <div className="flex items-center gap-4"><a href="/" className="flex items-center gap-2 text-sm text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver al Campus</a><LoginButton /></div>
       </div>
     </header>
     <main className="mx-auto max-w-6xl px-5 py-12 sm:py-20">

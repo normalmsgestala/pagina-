@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { formatDate, usePublicPosts, type Post } from './lib/api';
+import { LoginButton } from './components/LoginButton';
 import { ArrowLeft, ArrowRight, Search, BookOpen, X, CalendarDays, UserRound, Sparkles, HeartPulse, Lightbulb } from 'lucide-react';
 
 const article = {
@@ -88,7 +89,7 @@ export default function BlogPage() {
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 gap-4">
         <a href="/" className="font-serif text-xl font-semibold tracking-wide">LEAF <span className="text-sm font-normal text-amber-800">2026—2030</span></a>
-        <div className="flex items-center gap-4 text-sm"><a href="/panel" className="text-stone-600 hover:text-amber-800">Publicar</a><a href="/" className="flex items-center gap-2 text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver al Campus</a></div>
+        <div className="flex items-center gap-4 text-sm"><a href="/" className="flex items-center gap-2 text-stone-600 hover:text-amber-800"><ArrowLeft size={16}/> Volver al Campus</a><LoginButton /></div>
       </div>
     </header>
     <main className="mx-auto max-w-6xl px-5 py-12 sm:py-20">

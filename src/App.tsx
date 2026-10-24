@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { INITIAL_CURRICULUM } from './data/defaultCurriculum';
 import { api, isMod, useSession } from './lib/api';
 import { ResourcesSection } from './components/ResourcesSection';
+import { LoginButton } from './components/LoginButton';
 import { Semester, ModuleItem, EmergentTechTeamVideo } from './types/curriculum';
 import { SemesterView } from './components/SemesterView';
 import { ModuleDetailView } from './components/ModuleDetailView';
@@ -18,8 +19,8 @@ import { ChevronRight } from 'lucide-react';
 export default function App() {
   // El contenido de los semestres se guarda en la base de datos (lo editan moderadores y admin).
   const [curriculum, setCurriculum] = useState<Semester[]>(INITIAL_CURRICULUM);
-  const { user } = useSession();
-  const canEdit = isMod(user?.role) && !user?.mustChange;
+  const { user, ready: userReady } = useSession();
+  const canEdit = isMod(user?.role);
   const dirty = useRef(false);
   const [saveState, setSaveState] = useState<'' | 'saving' | 'saved' | 'error'>('');
 
@@ -173,9 +174,7 @@ export default function App() {
                 {isEditMode ? 'Salir de edición' : 'Modo edición'}
               </button>
             )}
-            <a href="/panel" className="rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-900">
-              {user ? 'Panel' : 'Entrar'}
-            </a>
+            <LoginButton user={userReady ? user : undefined} />
           </nav>
 
         </div>

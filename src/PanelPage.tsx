@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { ArrowLeft, LogOut, FlaskConical, Wrench, Truck, ShieldCheck, Lock } from 'lucide-react';
-import { api, isMod, ROLE_LABEL, TEAM_LABEL, type Team, type User } from './lib/api';
+import { ArrowLeft, LogOut, FlaskConical, Wrench, Truck, KeyRound, CheckCircle2 } from 'lucide-react';
+import { api, isMod, AI_TASKS_BY_ROLE, ROLE_DUTIES, ROLE_LABEL, TEAM_DUTIES, TEAM_LABEL, type Team, type User } from './lib/api';
 import { useSession } from './lib/api';
+import { LoginForm } from './components/LoginButton';
 import { SubmitPanel } from './components/panel/SubmitForms';
 import { ModerationPanel, MySubmissions } from './components/panel/Moderation';
 import { UsersPanel, ActivityPanel } from './components/panel/AdminPanels';
+import { ActivityChart } from './components/panel/ActivityChart';
+import { AiAssist } from './components/panel/AiAssist';
 
-const TEAMS: { id: Team; icon: any; text: string }[] = [
-  { id: 'investigacion', icon: FlaskConical, text: 'Subir documentación, artículos y fuentes bibliográficas.' },
-  { id: 'mecanica', icon: Wrench, text: 'Subir evidencias del trabajo y actualizar el calendario.' },
-  { id: 'logistica', icon: Truck, text: 'Subir evidencias del trabajo y actualizar el calendario.' },
+const TEAMS: { id: Team; icon: any }[] = [
+  { id: 'investigacion', icon: FlaskConical },
+  { id: 'mecanica', icon: Wrench },
+  { id: 'logistica', icon: Truck },
 ];
 
 const inputCls = 'mt-1 w-full rounded-lg border border-stone-300 bg-white p-3 text-sm focus:border-amber-600 focus:outline-none';
@@ -33,42 +36,19 @@ function Shell({ children, user, team, onLogout, onChangeTeam }: {
   </div>;
 }
 
-function Login({ onDone }: { onDone: () => void }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setBusy(true); setError('');
-    try { await api('auth/login', { body: { username: username.trim(), password } }); onDone(); }
-    catch (err: any) { setError(err.status === 503 ? 'El sistema de acceso aún no está activado. Avisa al administrador.' : err.message); }
-    finally { setBusy(false); }
-  };
-  return <form onSubmit={submit} className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 bg-white p-7 shadow-sm">
-    <Lock className="text-amber-800" size={22} />
-    <h1 className="font-serif text-3xl">Entrar a LEAF</h1>
-    <p className="text-sm text-stone-500">Acceso para estudiantes y maestros de la generación 2026–2030.</p>
-    <label className="block text-xs font-semibold">Usuario<input autoComplete="username" required value={username} onChange={e => setUsername(e.target.value)} className={inputCls} placeholder="nombre.apellido" /></label>
-    <label className="block text-xs font-semibold">Contraseña<input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} className={inputCls} /></label>
-    {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-    <button disabled={busy} className="w-full rounded-xl bg-stone-900 py-3 text-sm font-semibold text-white hover:bg-amber-900 disabled:opacity-50">{busy ? 'Entrando…' : 'Entrar'}</button>
-    <p className="text-xs text-stone-400">¿Olvidaste tu contraseña? Pídele al administrador una nueva.</p>
-  </form>;
-}
-
-function ChangePassword({ forced, onDone }: { forced: boolean; onDone: () => void }) {
+function ChangePassword() {
   const [f, setF] = useState({ current: '', next: '', repeat: '' });
   const [error, setError] = useState('');
   const [ok, setOk] = useState(false);
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError('');
+    e.preventDefault(); setError(''); setOk(false);
     if (f.next !== f.repeat) { setError('Las contraseñas nuevas no coinciden'); return; }
-    try { await api('auth/password', { body: { current: f.current, next: f.next } }); setOk(true); onDone(); }
+    try { await api('auth/password', { body: { current: f.current, next: f.next } }); setOk(true); setF({ current: '', next: '', repeat: '' }); }
     catch (err: any) { setError(err.message); }
   };
-  return <form onSubmit={submit} className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 bg-white p-7">
-    <h2 className="font-serif text-2xl">{forced ? 'Crea tu contraseña' : 'Cambiar contraseña'}</h2>
-    {forced && <p className="text-sm text-stone-500">Es tu primer ingreso. Cambia la contraseña temporal por una que solo tú conozcas (mínimo 8 caracteres).</p>}
+  return <form onSubmit={submit} className="max-w-sm space-y-4 rounded-2xl border border-stone-200 bg-white p-6">
+    <h2 className="flex items-center gap-2 font-serif text-2xl"><KeyRound size={20} className="text-amber-800" /> Cambiar contraseña</h2>
+    <p className="text-sm text-stone-500">Tu contraseña inicial es tu primer nombre seguido de «-leaf». Te recomendamos cambiarla por una que solo tú conozcas (mínimo 8 caracteres).</p>
     <label className="block text-xs font-semibold">Contraseña actual<input type="password" autoComplete="current-password" required value={f.current} onChange={e => setF({ ...f, current: e.target.value })} className={inputCls} /></label>
     <label className="block text-xs font-semibold">Contraseña nueva<input type="password" autoComplete="new-password" minLength={8} required value={f.next} onChange={e => setF({ ...f, next: e.target.value })} className={inputCls} /></label>
     <label className="block text-xs font-semibold">Repite la nueva<input type="password" autoComplete="new-password" minLength={8} required value={f.repeat} onChange={e => setF({ ...f, repeat: e.target.value })} className={inputCls} /></label>
@@ -86,56 +66,90 @@ function TeamPicker({ onPick }: { onPick: (t: Team) => void }) {
       {TEAMS.map(t => <button key={t.id} onClick={() => onPick(t.id)} className="rounded-2xl border border-stone-200 bg-white p-6 text-left transition hover:-translate-y-0.5 hover:border-amber-600 hover:shadow-md">
         <t.icon size={26} className="text-amber-800" />
         <p className="mt-4 font-serif text-2xl">{TEAM_LABEL[t.id]}</p>
-        <p className="mt-2 text-sm leading-6 text-stone-500">{t.text}</p>
+        <p className="mt-2 text-sm leading-6 text-stone-500">{TEAM_DUTIES[t.id]}</p>
       </button>)}
     </div>
   </div>;
 }
 
-type Tab = 'publicar' | 'mios' | 'moderar' | 'usuarios' | 'actividad' | 'cuenta';
+/** Pestaña de inicio: qué hace cada quien, accesos rápidos y la gráfica del grupo. */
+function Home({ user, team, go }: { user: User; team: Team | ''; go: (t: Tab) => void }) {
+  return <div className="space-y-6">
+    <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+      <section className="rounded-2xl border border-stone-200 bg-white p-5">
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-800">Tu función como {ROLE_LABEL[user.role].toLowerCase()}</p>
+        {team && <p className="mt-2 text-sm text-stone-700"><strong>Equipo de {TEAM_LABEL[team]}:</strong> {TEAM_DUTIES[team]}</p>}
+        <ul className="mt-3 space-y-2 text-sm text-stone-700">
+          {ROLE_DUTIES[user.role].map(d => <li key={d} className="flex gap-2"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-700" />{d}</li>)}
+        </ul>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {user.role !== 'maestro' && <button onClick={() => go('publicar')} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white">Publicar algo</button>}
+          {isMod(user.role) && <button onClick={() => go('moderar')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Revisar envíos</button>}
+          {isMod(user.role) && <a href="/" className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Editar la página (Modo edición)</a>}
+          {(user.role === 'admin' || user.role === 'maestro') && <button onClick={() => go('actividad')} className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Actividad y calificaciones</button>}
+        </div>
+      </section>
+      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
+        <p className="flex items-center gap-2 font-semibold"><KeyRound size={16} /> Tu contraseña</p>
+        <p className="mt-2 leading-6">Entraste con tu contraseña inicial (tu primer nombre + «-leaf»). Cualquiera que conozca tu nombre podría adivinarla y lo que haga quedaría registrado a tu nombre.</p>
+        <button onClick={() => go('cuenta')} className="mt-3 rounded-full bg-amber-800 px-4 py-2 text-xs font-semibold text-white">Cambiar mi contraseña</button>
+      </section>
+    </div>
+    <ActivityChart />
+  </div>;
+}
+
+function AiTab({ user }: { user: User }) {
+  const tasks = AI_TASKS_BY_ROLE[user.role];
+  const hint = user.role === 'admin'
+    ? 'Como administrador puedes pedirle cualquier tarea de edición o gestión, incluido un informe de actividad para calificar.'
+    : 'Como moderador, la IA te ayuda a revisar envíos y a redactar o mejorar textos de la página.';
+  return <div className="max-w-3xl"><AiAssist tasks={tasks} hint={hint} title="Asistente de IA" /></div>;
+}
+
+type Tab = 'inicio' | 'publicar' | 'mios' | 'moderar' | 'ia' | 'usuarios' | 'actividad' | 'cuenta';
 
 export default function PanelPage() {
   const { user, team, ready, refresh, setTeam } = useSession();
   const [picking, setPicking] = useState(false);
-  const [tab, setTab] = useState<Tab | null>(null);
+  const [tab, setTab] = useState<Tab>('inicio');
   const [error, setError] = useState('');
 
-  const logout = async () => { try { await api('auth/logout', { method: 'POST', body: {} }); } catch {} setTab(null); refresh(); };
+  const logout = async () => { try { await api('auth/logout', { method: 'POST', body: {} }); } catch {} setTab('inicio'); refresh(); };
   const pickTeam = async (t: Team) => {
     try { await api('auth/team', { body: { team: t } }); setTeam(t); setPicking(false); setError(''); }
     catch (e: any) { setError(e.message); }
   };
 
   if (!ready) return <Shell><p className="text-center text-sm text-stone-500">Cargando…</p></Shell>;
-  if (!user) return <Shell><Login onDone={refresh} /></Shell>;
+  if (!user) return <Shell><div className="mx-auto max-w-sm rounded-2xl border border-stone-200 bg-white p-7 shadow-sm"><LoginForm onDone={refresh} /></div></Shell>;
   const shell = (c: React.ReactNode) => <Shell user={user} team={team} onLogout={logout} onChangeTeam={() => setPicking(true)}>{c}</Shell>;
-  if (user.mustChange) return shell(<ChangePassword forced onDone={refresh} />);
-  const needsTeam = user.role !== 'maestro';
-  if (needsTeam && (!team || picking)) return shell(<>{error && <p className="mb-4 text-center text-sm text-red-700">{error}</p>}<TeamPicker onPick={pickTeam} /></>);
+  if (user.role !== 'maestro' && (!team || picking)) return shell(<>{error && <p className="mb-4 text-center text-sm text-red-700">{error}</p>}<TeamPicker onPick={pickTeam} /></>);
 
-  const tabs: [Tab, string][] = [];
+  const tabs: [Tab, string][] = [['inicio', 'Inicio']];
   if (user.role !== 'maestro') tabs.push(['publicar', 'Publicar'], ['mios', 'Mis envíos']);
-  if (isMod(user.role)) tabs.push(['moderar', 'Moderación']);
+  if (isMod(user.role)) tabs.push(['moderar', 'Moderación'], ['ia', 'Asistente de IA']);
   if (user.role === 'admin') tabs.push(['usuarios', 'Usuarios y permisos']);
   if (user.role === 'admin' || user.role === 'maestro') tabs.push(['actividad', 'Actividad y calificaciones']);
   tabs.push(['cuenta', 'Mi cuenta']);
-  const current = tab && tabs.some(([t]) => t === tab) ? tab : tabs[0][0];
+  const current = tabs.some(([t]) => t === tab) ? tab : 'inicio';
 
   return shell(<div className="space-y-8">
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest text-amber-800">{team ? 'Equipo de ' + TEAM_LABEL[team] : ROLE_LABEL[user.role]}</p>
       <h1 className="mt-2 font-serif text-3xl sm:text-4xl">Hola, {user.fullName.split(' ')[0]}.</h1>
-      {isMod(user.role) && <p className="mt-2 flex items-center gap-2 text-sm text-stone-500"><ShieldCheck size={15} /> Para editar los módulos y textos de la página, ve a la página principal: verás el botón «Modo edición» arriba.</p>}
     </div>
     <nav className="flex flex-wrap gap-2 border-b border-stone-200 pb-3">
       {tabs.map(([t, l]) => <button key={t} onClick={() => setTab(t)}
         className={`rounded-full px-4 py-2 text-sm ${current === t ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-200'}`}>{l}</button>)}
     </nav>
+    {current === 'inicio' && <Home user={user} team={team} go={setTab} />}
     {current === 'publicar' && <SubmitPanel user={user} team={team} />}
     {current === 'mios' && <MySubmissions />}
     {current === 'moderar' && <ModerationPanel />}
+    {current === 'ia' && <AiTab user={user} />}
     {current === 'usuarios' && <UsersPanel me={user} />}
     {current === 'actividad' && <ActivityPanel />}
-    {current === 'cuenta' && <ChangePassword forced={false} onDone={() => {}} />}
+    {current === 'cuenta' && <ChangePassword />}
   </div>);
 }

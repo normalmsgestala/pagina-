@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { FileText, Mic, FolderOpen, BookMarked, Camera, CalendarPlus, Send, CheckCircle2 } from 'lucide-react';
 import { INITIAL_CURRICULUM } from '../../data/defaultCurriculum';
-import { api, apaReference, isMod, KINDS_BY_TEAM, CALENDAR_TEAMS, KIND_LABEL, type Kind, type Role, type Team, type User } from '../../lib/api';
+import { api, apaReference, isMod, KINDS_BY_TEAM, CALENDAR_TEAMS, KIND_LABEL, type AiTask, type Kind, type Role, type Team, type User } from '../../lib/api';
+import { AiAssist } from './AiAssist';
 
 type FormKind = Kind | 'calendario';
 const ICONS: Record<FormKind, any> = { articulo: FileText, podcast: Mic, documento: FolderOpen, fuente: BookMarked, evidencia: Camera, calendario: CalendarPlus };
@@ -13,6 +14,21 @@ const HINTS: Record<FormKind, string> = {
   evidencia: 'Fotos, videos o archivos que muestran el trabajo realizado.',
   calendario: 'Fecha, actividad realizada o próxima, con fotos o videos.',
 };
+const AI_FIELDS: Record<FormKind, { id: string; label: string }[]> = {
+  articulo: [{ id: 'summary', label: 'Resumen' }, { id: 'intro', label: 'Introducción' }, { id: 'body', label: 'Desarrollo' },
+    { id: 'conclusion', label: 'Conclusiones' }, { id: 'references', label: 'Referencias' }, { id: 'keywords', label: 'Palabras clave' }],
+  podcast: [{ id: 'summary', label: 'Descripción' }, { id: 'sources', label: 'Fuentes consultadas' }],
+  documento: [{ id: 'summary', label: 'Descripción' }],
+  fuente: [{ id: '_ref', label: 'Datos de la fuente' }, { id: 'summary', label: '¿Para qué sirve?' }],
+  evidencia: [{ id: 'summary', label: '¿Qué se hizo?' }],
+  calendario: [{ id: 'description', label: 'Descripción' }],
+};
+const AI_FORM_TASKS: Record<FormKind, AiTask[]> = {
+  articulo: ['corregir', 'mejorar', 'resumir', 'palabras_clave', 'sugerencias'],
+  podcast: ['corregir', 'mejorar', 'sugerencias'], documento: ['corregir', 'mejorar'],
+  fuente: ['apa', 'corregir'], evidencia: ['corregir', 'mejorar'], calendario: ['corregir', 'mejorar'],
+};
+
 const MODULES = (INITIAL_CURRICULUM[0]?.modules || []).map(m => ({ id: m.id, title: m.title }));
 
 export function availableForms(role: Role, team: Team | ''): FormKind[] {
@@ -162,6 +178,13 @@ function FormFor({ kind, user, onDone }: { kind: FormKind; user: User; onDone: (
       <Field label="Descripción" wide><textarea rows={3} value={v('description')} onChange={set('description')} className={input} /></Field>
       <Field label="Enlaces de fotos o videos" hint="Uno por línea." wide><textarea rows={3} value={v('links')} onChange={set('links')} className={input} placeholder="https://..." /></Field>
     </div>}
+
+    <AiAssist tasks={AI_FORM_TASKS[kind]} fields={AI_FIELDS[kind]}
+      hint="Te ayuda solo con tu propio texto: corrige, mejora y sugiere. Tú decides qué usar."
+      getText={id => id === '_ref' ? [v('authors'), v('year') && '(' + v('year') + ')', v('title'), v('source'), v('volume'), v('pages'), v('url')].filter(Boolean).join('. ')
+        : id === 'summary' && kind === 'articulo' ? [v('summary'), v('intro'), v('body'), v('conclusion')].filter(Boolean).join('\n\n') : v(id)}
+      targetFor={(task, id) => task === 'palabras_clave' ? 'keywords' : task === 'resumir' ? 'summary' : id === '_ref' ? 'summary' : id}
+      onApply={(id, value) => setF(p => ({ ...p, [id]: value }))} />
 
     {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     <div className="flex flex-wrap items-center gap-3">
