@@ -1,4 +1,5 @@
 import { INITIAL_CURRICULUM } from '../src/data/defaultCurriculum.ts';
+import { sanitizeDesign } from '../src/lib/designSchema.ts';
 // API de LEAF: usuarios, permisos, publicaciones, calendario, contenido y bitácora.
 // Corre en Cloudflare Pages Functions con una base D1 enlazada como `DB`.
 
@@ -20,7 +21,7 @@ type Kind = 'articulo' | 'podcast' | 'documento' | 'fuente' | 'evidencia';
 const ROLES: Role[] = ['admin', 'capitan', 'moderador', 'editor', 'maestro'];
 const TEAMS: Team[] = ['investigacion', 'mecanica', 'logistica'];
 const KINDS: Kind[] = ['articulo', 'podcast', 'documento', 'fuente', 'evidencia'];
-const CONTENT_KEYS = ['curriculum', 'emerging-tech'];
+const CONTENT_KEYS = ['curriculum', 'emerging-tech', 'design'];
 const COOKIE = 'leaf_session';
 const SESSION_DAYS = 7;
 const PBKDF2_ITERATIONS = 100000;
@@ -556,7 +557,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
       if (m === 'PUT') {
         const ss = needReady(s); need(ss, APPROVERS);
         const b = await body(req);
-        const value = JSON.stringify(b.value ?? null);
+        const value = JSON.stringify(sub === 'design' ? sanitizeDesign(b.value) : (b.value ?? null));
         if (value.length > 900000) throw new HttpError(400, 'El contenido es demasiado grande');
         const prev = await db.prepare('SELECT value FROM site_content WHERE key = ?').bind(sub).first();
         if (prev && prev.value !== value) await snapshot(db, ss, 'pagina', sub, 'edicion', str(b.detail, 300, 'detalle') || sub, prev.value);

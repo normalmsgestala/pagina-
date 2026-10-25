@@ -3,6 +3,9 @@ import App from './App.tsx';
 import BlogPage from './BlogPage.tsx';
 import PanelPage from './PanelPage.tsx';
 import './index.css';
+import { loadSavedDesign } from './lib/design';
+
+loadSavedDesign();
 
 import PodcastPage from './PodcastPage.tsx';
 

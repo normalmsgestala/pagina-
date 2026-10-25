@@ -2,11 +2,11 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: var(--leaf-font-body, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif);
   }
 
   h1, h2, h3, .font-display {
-    font-family: 'Fraunces', Georgia, serif;
+    font-family: var(--leaf-font-heading, 'Fraunces', Georgia, serif);
   }
 
   code, pre, .font-mono {
@@ -22,8 +22,8 @@
 body { background-color: var(--circus-cream); }
 .circus-intro { background: var(--circus-cream); }
 .circus-marquee {
-  background-color: #8e1d2c;
-  background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 22px, transparent 22px 44px), radial-gradient(ellipse at 50% -40%, #d44a42 0%, #8e1d2c 65%);
+  background-color: var(--circus-red);
+  background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 22px, transparent 22px 44px), radial-gradient(ellipse at 50% -40%, color-mix(in oklab, var(--circus-red) 70%, white) 0%, var(--circus-red) 65%);
   position: relative;
 }
 .circus-marquee:after {
@@ -34,15 +34,15 @@ body { background-color: var(--circus-cream); }
   position: absolute;
   bottom: 0;
   left: 0;
-  background: repeating-linear-gradient(90deg, #f2bd45 0 18px, #fff8e8 18px 36px);
+  background: repeating-linear-gradient(90deg, var(--circus-gold) 0 18px, var(--circus-cream) 18px 36px);
 }
 .circus-project-card {
-  border-color: #e7c67b !important;
-  background-image: linear-gradient(145deg, #fffdf6, #fff6e2) !important;
+  border-color: color-mix(in oklab, var(--circus-gold) 70%, white) !important;
+  background-image: linear-gradient(145deg, color-mix(in oklab, var(--circus-cream) 40%, white), var(--circus-cream)) !important;
 }
 .circus-ribbon {
-  background: #8e1d2c;
-  color: #fff8e8;
-  border: 2px solid #f2bd45;
+  background: var(--circus-red);
+  color: var(--circus-cream);
+  border: 2px solid var(--circus-gold);
   box-shadow: 0 4px 0 rgba(83, 18, 28, .15);
 }

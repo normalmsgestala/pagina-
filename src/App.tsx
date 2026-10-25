@@ -8,6 +8,7 @@ import { INITIAL_CURRICULUM } from './data/defaultCurriculum';
 import { api, isApprover, useSession } from './lib/api';
 import { ResourcesSection } from './components/ResourcesSection';
 import { LoginButton } from './components/LoginButton';
+import { useDesign } from './lib/design';
 import { Semester, ModuleItem, EmergentTechTeamVideo } from './types/curriculum';
 import { SemesterView } from './components/SemesterView';
 import { ModuleDetailView } from './components/ModuleDetailView';
@@ -20,6 +21,7 @@ export default function App() {
   // El contenido de los semestres se guarda en la base de datos (lo editan moderadores y admin).
   const [curriculum, setCurriculum] = useState<Semester[]>(INITIAL_CURRICULUM);
   const { user, ready: userReady } = useSession();
+  const design = useDesign();
   const canEdit = isApprover(user?.role);
   const canContribute = !!user && user.role !== 'maestro';
   const dirty = useRef(false);
@@ -161,7 +163,7 @@ export default function App() {
             className="text-left cursor-pointer focus:outline-hidden"
           >
             <span className="text-sm sm:text-base font-bold text-stone-900 font-display hover:text-amber-900 transition-colors">
-              Campus LEAF
+              {design.home.logo}
             </span>
           </button>
 
@@ -218,24 +220,22 @@ export default function App() {
           <div className="space-y-12 animate-fadeIn max-w-3xl">
             {/* Pure Institutional Header & Description */}
             <div className="space-y-4">
-              <div className="text-xs font-semibold text-amber-800 uppercase tracking-wider font-mono">
-                Generación 2026–2030 · Escuela Normal Superior «Profesor Moisés Sáenz Garza»
-              </div>
+              {design.home.badge && <div className="text-xs font-semibold text-amber-800 uppercase tracking-wider font-mono">
+                {design.home.badge}
+              </div>}
 
               <h1 className="text-3xl sm:text-5xl font-bold text-stone-900 font-display tracking-tight text-balance leading-tight">
-                Campus LEAF: la física se vuelve una aventura
+                {design.home.title}
               </h1>
 
-              <p className="text-base sm:text-lg text-stone-600 leading-relaxed pt-2">
-                Diseñar y construir un entorno interactivo y lúdico basado en atracciones mecánicas y astronómicas, 
-                transformando conceptos abstractos de la física en experiencias de aprendizaje activo para la formación docente 
-                en la Escuela Normal Superior. La articulación de mecánica, álgebra, tecnologías y didáctica garantiza el 
-                desarrollo de competencias pedagógicas innovadoras para la enseñanza en educación básica.
-              </p>
+              {design.home.description && <p className="text-base sm:text-lg text-stone-600 leading-relaxed pt-2 whitespace-pre-line">
+                {design.home.description}
+              </p>}
             </div>
 
-            {/* Separated by Semesters */}
-            <div className="space-y-4 pt-6 border-t border-stone-200">
+            {design.home.sections.filter((x) => x.visible).map(({ id }) => id === 'calendario' ? <CalendarSection key={id} />
+              : id === 'biblioteca' ? <ResourcesSection key={id} /> : (
+            <div key={id} className="space-y-4 pt-6 border-t border-stone-200">
               <div className="flex items-center justify-between text-xs text-stone-500">
                 <span className="font-semibold text-stone-800 uppercase tracking-wider font-mono">
                   Organización por Semestres
@@ -288,8 +288,7 @@ export default function App() {
                 })}
               </div>
             </div>
-            <CalendarSection />
-            <ResourcesSection />
+            ))}
           </div>
         )}
 
