@@ -4,7 +4,13 @@ export type SectionId = 'semestres' | 'calendario' | 'biblioteca';
 export type Radius = 'recto' | 'normal' | 'redondo';
 
 export interface SiteDesign {
+  v: 2;
+  cardStyle: 'estampa' | 'plano';
   colors: {
+    heading: string;     // títulos grandes
+    text: string;        // letras de las explicaciones
+    button: string;      // botones importantes
+    calendar: string;    // números del calendario
     accent: string;      // color principal (títulos pequeños, enlaces, botones de acento)
     dark: string;        // botones oscuros y texto principal
     background: string;  // fondo de la página
@@ -32,7 +38,12 @@ export const HEADING_FONTS = ['Fraunces', 'Playfair Display', 'Merriweather', 'L
 export const BODY_FONTS = ['Plus Jakarta Sans', 'Inter', 'Nunito', 'Lato', 'Source Sans 3', 'Poppins', 'Montserrat', 'Merriweather'];
 
 export const DEFAULT_DESIGN: SiteDesign = {
-  colors: { accent: '#92400e', dark: '#1c1917', background: '#fff8e8', marquee: '#8e1d2c', gold: '#f2bd45' },
+  v: 2,
+  cardStyle: 'estampa',
+  colors: {
+    heading: '#1b4332', text: '#2b2d42', button: '#c85a32', calendar: '#e9c46a',
+    accent: '#92400e', dark: '#1c1917', background: '#fafaed', marquee: '#8e1d2c', gold: '#f2bd45',
+  },
   fonts: { heading: 'Fraunces', body: 'Plus Jakarta Sans' },
   radius: 'normal',
   home: {
@@ -50,7 +61,8 @@ const text = (v: unknown, max: number, def: string) => (typeof v === 'string' ? 
 /** Limpia cualquier diseño recibido: solo colores hexadecimales, tipografías de la lista y textos acotados. */
 export function sanitizeDesign(input: unknown): SiteDesign {
   const d = (input && typeof input === 'object' ? input : {}) as any;
-  const c = d.colors || {}, f = d.fonts || {}, h = d.home || {};
+  // Los diseños guardados antes de la paleta v2 conservan textos y secciones, pero toman los colores nuevos.
+  const c = d.v === 2 ? d.colors || {} : {}, f = d.fonts || {}, h = d.home || {};
   const color = (k: keyof SiteDesign['colors']) => (typeof c[k] === 'string' && HEX.test(c[k]) ? c[k].toLowerCase() : DEFAULT_DESIGN.colors[k]);
   const ids = Object.keys(SECTION_LABEL) as SectionId[];
   const given: { id: SectionId; visible: boolean }[] = Array.isArray(h.sections)
@@ -59,7 +71,12 @@ export function sanitizeDesign(input: unknown): SiteDesign {
   const seen = new Set<string>();
   const sections = [...given, ...DEFAULT_DESIGN.home.sections].filter(x => (seen.has(x.id) ? false : (seen.add(x.id), true)));
   return {
-    colors: { accent: color('accent'), dark: color('dark'), background: color('background'), marquee: color('marquee'), gold: color('gold') },
+    v: 2,
+    cardStyle: d.cardStyle === 'plano' ? 'plano' : 'estampa',
+    colors: {
+      heading: color('heading'), text: color('text'), button: color('button'), calendar: color('calendar'),
+      accent: color('accent'), dark: color('dark'), background: color('background'), marquee: color('marquee'), gold: color('gold'),
+    },
     fonts: {
       heading: HEADING_FONTS.includes(f.heading) ? f.heading : DEFAULT_DESIGN.fonts.heading,
       body: BODY_FONTS.includes(f.body) ? f.body : DEFAULT_DESIGN.fonts.body,
@@ -89,7 +106,11 @@ export function designVariables(d: SiteDesign): Record<string, string> {
     '--color-amber-50': mixW(a, 8), '--color-amber-100': mixW(a, 16), '--color-amber-200': mixW(a, 30), '--color-amber-300': mixW(a, 48),
     '--color-amber-600': mixW(a, 80), '--color-amber-700': mixW(a, 90), '--color-amber-800': a, '--color-amber-900': mixB(a, 78),
     '--color-stone-900': k, '--color-stone-800': mixW(k, 88), '--color-stone-950': mixB(k, 80),
-    '--color-stone-50': d.colors.background, '--circus-cream': d.colors.background,
+    '--color-stone-50': d.colors.background, '--circus-cream': d.colors.background, '--leaf-bg': d.colors.background,
+    '--color-stone-700': d.colors.text, '--color-stone-600': d.colors.text, '--color-stone-500': mixW(d.colors.text, 76),
+    '--leaf-heading': d.colors.heading, '--leaf-text': d.colors.text, '--leaf-button': d.colors.button,
+    '--leaf-button-hover': mixB(d.colors.button, 82), '--leaf-calendar': d.colors.calendar,
+    '--leaf-sticker': d.cardStyle === 'estampa' ? '1' : '0',
     '--circus-red': d.colors.marquee, '--circus-gold': d.colors.gold,
     '--font-serif': font(d.fonts.heading, 'Georgia, serif'), '--leaf-font-heading': font(d.fonts.heading, 'Georgia, serif'),
     '--font-sans': font(d.fonts.body, 'system-ui, sans-serif'), '--leaf-font-body': font(d.fonts.body, 'system-ui, sans-serif'),

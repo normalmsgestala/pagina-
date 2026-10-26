@@ -19,7 +19,7 @@
 
 /* Campus LEAF — identidad visual de feria científica */
 :root { --circus-red: #9f1d2d; --circus-cream: #fff8e8; --circus-gold: #f2bd45; }
-body { background-color: var(--circus-cream); }
+body { background-color: var(--leaf-bg, var(--circus-cream)); color: var(--leaf-text, inherit); }
 .circus-intro { background: var(--circus-cream); }
 .circus-marquee {
   background-color: var(--circus-red);
@@ -46,3 +46,60 @@ body { background-color: var(--circus-cream); }
   border: 2px solid var(--circus-gold);
   box-shadow: 0 4px 0 rgba(83, 18, 28, .15);
 }
+
+/* ===== Paleta del Campus (editable en «Diseño de la página») =====
+   Estas reglas van fuera de las capas de Tailwind para ganarle a las clases utilitarias.
+   Nunca tocan la presentación de las mascotas (.circus-intro) ni los simuladores (.leaf-keep). */
+
+/* Títulos grandes en verde pino */
+:is(h1, h2, h3):not(.circus-intro *, .leaf-keep *, [class*="text-white"], [class*="text-amber"], [class*="text-red"], [class*="text-emerald"], [class*="text-violet"], [class*="text-sky"]) {
+  color: var(--leaf-heading, #1b4332);
+}
+
+/* Botones importantes en naranja terracota */
+:is(button, a).bg-stone-900:not(.circus-intro *, .leaf-keep *),
+:is(button, a).bg-amber-700:not(.circus-intro *, .leaf-keep *),
+:is(button, a).bg-amber-800:not(.circus-intro *, .leaf-keep *) {
+  background-color: var(--leaf-button, #c85a32);
+  color: #fff;
+}
+:is(button, a).bg-stone-900:not(.circus-intro *, .leaf-keep *):hover,
+:is(button, a).bg-amber-700:not(.circus-intro *, .leaf-keep *):hover,
+:is(button, a).bg-amber-800:not(.circus-intro *, .leaf-keep *):hover {
+  background-color: var(--leaf-button-hover, #a4441f);
+}
+
+/* Números del calendario en amarillo sol, sobre verde pino para que se lean */
+.leaf-calendar-date {
+  background-color: var(--leaf-heading, #1b4332);
+  color: var(--leaf-calendar, #e9c46a);
+}
+
+/* Tarjetas de proyectos como estampas: caja blanca, borde suave y sombra de papel pegado */
+.leaf-sticker, .circus-project-card {
+  background: #fff !important;
+  background-image: none !important;
+  border: 1px solid color-mix(in oklab, var(--leaf-heading, #1b4332) 14%, white) !important;
+  box-shadow: 0 1px 0 rgba(27, 67, 50, .06), 0 10px 22px -16px rgba(27, 67, 50, .45);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:not([style*="--leaf-sticker: 0"]) .leaf-sticker:nth-child(odd),
+  html:not([style*="--leaf-sticker: 0"]) .circus-project-card:nth-child(odd) { transform: rotate(-0.35deg); }
+  html:not([style*="--leaf-sticker: 0"]) .leaf-sticker:nth-child(even),
+  html:not([style*="--leaf-sticker: 0"]) .circus-project-card:nth-child(even) { transform: rotate(0.35deg); }
+  .leaf-sticker:hover, .circus-project-card:hover { transform: rotate(0) translateY(-2px) !important; box-shadow: 0 2px 0 rgba(27, 67, 50, .06), 0 16px 26px -16px rgba(27, 67, 50, .5); }
+}
+
+/* Las mascotas conservan sus colores originales aunque cambie la paleta */
+.circus-intro {
+  --circus-cream: #fff8e8; --circus-red: #8e1d2c; --circus-gold: #f2bd45;
+  --color-amber-50: oklch(98.7% 0.022 95.277); --color-amber-100: oklch(96.2% 0.059 95.617);
+  --color-amber-200: oklch(92.4% 0.12 95.746); --color-amber-300: oklch(87.9% 0.169 91.605);
+  --color-amber-600: oklch(66.6% 0.179 58.318); --color-amber-700: oklch(55.5% 0.163 48.998);
+  --color-amber-800: oklch(47.3% 0.137 46.201); --color-amber-900: oklch(41.4% 0.112 45.904);
+  --color-stone-50: oklch(98.5% 0.001 106.423); --color-stone-500: oklch(55.3% 0.013 58.071);
+  --color-stone-600: oklch(44.4% 0.011 73.639); --color-stone-700: oklch(37.4% 0.01 67.558);
+  --color-stone-800: oklch(26.8% 0.007 34.298); --color-stone-900: oklch(21.6% 0.006 56.043);
+}
+.circus-intro .circus-project-card, .circus-intro .leaf-sticker { transform: none; }

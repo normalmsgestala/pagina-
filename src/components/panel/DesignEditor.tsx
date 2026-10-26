@@ -5,18 +5,22 @@ import { applyDesign, cacheDesign, loadSavedDesign } from '../../lib/design';
 import { BODY_FONTS, DEFAULT_DESIGN, HEADING_FONTS, SECTION_LABEL, sanitizeDesign, type Radius, type SiteDesign } from '../../lib/designSchema';
 
 const COLOR_FIELDS: { key: keyof SiteDesign['colors']; label: string; hint: string }[] = [
-  { key: 'accent', label: 'Color principal', hint: 'Enlaces, etiquetas y botones de acento' },
-  { key: 'dark', label: 'Color oscuro', hint: 'Botones principales y títulos' },
-  { key: 'background', label: 'Fondo', hint: 'Color de fondo de la página' },
+  { key: 'background', label: 'Fondo', hint: 'Color de fondo de toda la página' },
+  { key: 'heading', label: 'Títulos grandes', hint: 'Títulos de secciones y proyectos' },
+  { key: 'text', label: 'Letras de las explicaciones', hint: 'Párrafos y textos descriptivos' },
+  { key: 'button', label: 'Botones importantes', hint: 'Iniciar sesión, Publicar, Guardar…' },
+  { key: 'calendar', label: 'Números del calendario', hint: 'Fechas del calendario de actividades' },
+  { key: 'accent', label: 'Etiquetas y enlaces', hint: 'Textos pequeños de acento y enlaces' },
+  { key: 'dark', label: 'Texto fuerte', hint: 'Nombres y textos destacados' },
   { key: 'marquee', label: 'Marquesina del proyecto', hint: 'Recuadro «¡Bienvenidos al Parque!»' },
   { key: 'gold', label: 'Detalles dorados', hint: 'Franjas y bordes de las tarjetas' },
 ];
+const D = DEFAULT_DESIGN.colors;
 const PRESETS: { name: string; colors: SiteDesign['colors'] }[] = [
-  { name: 'Feria (original)', colors: DEFAULT_DESIGN.colors },
-  { name: 'Ciencia azul', colors: { accent: '#1d4ed8', dark: '#0f172a', background: '#f1f5ff', marquee: '#1e3a8a', gold: '#38bdf8' } },
-  { name: 'Bosque', colors: { accent: '#15803d', dark: '#14261b', background: '#f3faf3', marquee: '#14532d', gold: '#a3e635' } },
-  { name: 'Atardecer', colors: { accent: '#c2410c', dark: '#2a1608', background: '#fff5ec', marquee: '#9a3412', gold: '#fbbf24' } },
-  { name: 'Morado', colors: { accent: '#7e22ce', dark: '#1e1033', background: '#faf5ff', marquee: '#581c87', gold: '#f0abfc' } },
+  { name: 'Campus (crema, pino y terracota)', colors: D },
+  { name: 'Feria clásica', colors: { ...D, background: '#fff8e8', heading: '#1c1917', text: '#44403c', button: '#1c1917', calendar: '#f2bd45' } },
+  { name: 'Ciencia azul', colors: { ...D, accent: '#1d4ed8', background: '#f1f5ff', heading: '#1e3a8a', text: '#1f2937', button: '#2563eb', calendar: '#7dd3fc' } },
+  { name: 'Morado', colors: { ...D, accent: '#7e22ce', background: '#faf5ff', heading: '#581c87', text: '#2e1065', button: '#9333ea', calendar: '#f0abfc' } },
 ];
 const input = 'mt-1 w-full rounded-lg border border-stone-300 bg-white p-2 text-sm font-normal';
 
@@ -73,6 +77,11 @@ export function DesignEditor() {
           <select value={d.fonts.body} onChange={e => update({ ...d, fonts: { ...d.fonts, body: e.target.value } })} className={input}>
             {BODY_FONTS.map(f => <option key={f} value={f}>{f}</option>)}</select></label>
         <div className="sm:col-span-2">
+          <p className="text-xs font-semibold text-stone-700">Tarjetas de proyectos</p>
+          <div className="mt-1 flex gap-2">{([['estampa', 'Estampas pegadas'], ['plano', 'Planas']] as const).map(([k, l]) =>
+            <button key={k} onClick={() => update({ ...d, cardStyle: k })} className={`rounded-xl border px-4 py-2 text-xs ${d.cardStyle === k ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 bg-white'}`}>{l}</button>)}</div>
+        </div>
+        <div className="sm:col-span-2">
           <p className="flex items-center gap-2 text-xs font-semibold text-stone-700"><Square size={14} /> Esquinas de tarjetas y botones</p>
           <div className="mt-1 flex gap-2">{([['recto', 'Rectas'], ['normal', 'Normales'], ['redondo', 'Redondeadas']] as [Radius, string][]).map(([r, l]) =>
             <button key={r} onClick={() => update({ ...d, radius: r })} className={`rounded-xl border px-4 py-2 text-xs ${d.radius === r ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 bg-white'}`}>{l}</button>)}</div>
@@ -108,7 +117,9 @@ export function DesignEditor() {
           <p className="font-display text-xl font-bold leading-tight text-stone-900">{d.home.title}</p>
           <p className="line-clamp-3 text-xs text-stone-600">{d.home.description}</p>
           <div className="circus-marquee mt-3 rounded-2xl px-3 pb-4 pt-3 text-center text-xs font-black uppercase text-white">¡Bienvenidos al Parque!</div>
-          <div className="circus-project-card mt-2 rounded-2xl border p-3 text-sm font-bold font-display">01 Primer Semestre</div>
+          <div className="circus-project-card mt-2 rounded-2xl border p-3"><h3 className="text-sm font-bold font-display">01 Primer Semestre</h3></div>
+          <div className="flex items-center gap-2 pt-1"><span className="leaf-calendar-date rounded-lg px-2 py-1 text-[11px] font-bold">16 oct 2026</span><span className="text-xs text-stone-600">Inauguración</span></div>
+          <button type="button" className="mt-1 rounded-full bg-stone-900 px-3 py-1 text-[11px] font-semibold text-white">Botón importante</button>
           <a className="mt-1 inline-block text-xs text-amber-800 underline">Enlace de ejemplo</a>
         </div>
         <p className="border-t border-stone-200 bg-white px-4 py-2 text-[11px] text-stone-500">Vista previa · toda la página ya muestra tus cambios mientras editas</p>

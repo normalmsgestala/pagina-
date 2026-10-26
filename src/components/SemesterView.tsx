@@ -155,7 +155,7 @@ export const SemesterView: React.FC<SemesterViewProps> = ({
                     <div
                       key={mod.id}
                       onClick={() => onSelectModule(mod)}
-                      className="group p-6 rounded-2xl border border-stone-200/90 hover:border-amber-500 bg-white transition-all cursor-pointer shadow-2xs"
+                      className="leaf-sticker group p-6 rounded-2xl border border-stone-200/90 hover:border-amber-500 bg-white transition-all cursor-pointer shadow-2xs"
                     >
                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                         <div className="space-y-3 flex-1">

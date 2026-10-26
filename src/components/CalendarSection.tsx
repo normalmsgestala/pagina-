@@ -24,7 +24,7 @@ export function CalendarSection() {
     <div className="space-y-3">
       {events.slice().sort((a, b) => b.date.localeCompare(a.date)).map(ev => <details key={ev.id} className="group rounded-xl border border-stone-200 bg-white">
         <summary className="flex cursor-pointer list-none items-center gap-4 p-4">
-          <span className="min-w-20 rounded-lg bg-stone-100 px-3 py-2 text-center text-xs font-bold text-stone-700">{new Date(ev.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+          <span className="leaf-calendar-date min-w-20 rounded-lg px-3 py-2 text-center text-xs font-bold">{new Date(ev.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
           <span className="flex-1 font-semibold text-stone-800">{ev.title}</span>
           <ChevronDown size={16} className="text-stone-400 transition group-open:rotate-180" />
         </summary>

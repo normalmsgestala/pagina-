@@ -289,7 +289,7 @@ export const ModuleDetailView: React.FC<ModuleDetailViewProps> = ({
 
       {/* TAB 1: SIMULADOR INTERACTIVO */}
       {activeTab === 'simulator' && (
-        <div className="animate-fadeIn">
+        <div className="leaf-keep animate-fadeIn">
           {renderSimulator()}
         </div>
       )}
