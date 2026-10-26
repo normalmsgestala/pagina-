@@ -1,80 +1,36 @@
 import React, { useMemo, useState } from 'react';
 import { formatDate, usePublicPosts, type Post } from './lib/api';
+import { ARTICLE_PARTS, lines as refLines, parseFigures } from './lib/articleRubric';
 import { LoginButton } from './components/LoginButton';
-import { ARTICLE_002, ARTICLE_003, type ArticleSection } from './data/articlesBitacora';
+import { ARTICLE_001, ARTICLE_002, ARTICLE_003, type StaticArticle, type ArticleSection } from './data/articlesBitacora';
 import { ArrowLeft, ArrowRight, Search, BookOpen, X, CalendarDays, UserRound, Sparkles, HeartPulse, Lightbulb } from 'lucide-react';
 
-const article = {
-  id: '001',
-  category: 'Investigación educativa',
-  title: 'El bienestar socioemocional docente en Nuevo León: desafíos institucionales para una educación más humana',
-  excerpt: '¿Quién cuida a quienes enseñan? Una mirada a las condiciones que hacen posible una escuela más humana.',
-  date: '18 de octubre de 2026',
-  image: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1600&q=85',
-  author: 'Carlos Ismael Estala Coronado',
-  keywords: 'bienestar docente; educación socioemocional; salud mental; condiciones laborales; Nuevo León',
-  abstract: 'Este artículo analiza los desafíos del bienestar socioemocional del profesorado en Nuevo León desde una perspectiva institucional y sistémica. Se propone un enfoque interpretativo-crítico y humanista para examinar cómo las condiciones organizacionales, las demandas emocionales y los recursos de apoyo se relacionan en la experiencia docente. La estrategia consiste en una revisión documental exploratoria y un análisis temático de fuentes académicas. La discusión preliminar aborda el agotamiento profesional, el trabajo emocional, la formación socioemocional, las redes de apoyo y el liderazgo escolar. La literatura consultada destaca la relevancia del bienestar docente, aunque la evidencia local disponible es limitada y no permite generalizar resultados a todo el estado. Se plantea que el bienestar no debe tratarse únicamente como una competencia individual, sino como una responsabilidad compartida entre autoridades, equipos directivos y comunidades escolares. Las recomendaciones iniciales incluyen acceso confidencial a apoyo psicológico, revisión de tareas administrativas, colaboración entre pares y formación de liderazgos sensibles. El texto es una revisión documental exploratoria en desarrollo; las afirmaciones sobre condiciones actuales específicas de Nuevo León requieren verificación adicional.',
-  sections: [
-    { heading: '1. Introducción', paragraphs: [
-      'La educación emocional busca desarrollar conciencia y regulación emocional, autogestión y habilidades interpersonales, y requiere programas fundamentados y profesorado preparado (Bisquerra Alzina, 2003). Esta atención a las emociones plantea una pregunta institucional: ¿qué condiciones necesita el profesorado para acompañar el bienestar de sus estudiantes sin que su propia salud emocional quede relegada?',
-      'El problema que orienta este artículo es la posible individualización del bienestar docente. Cuando el agotamiento se explica solo como falta de resiliencia o de habilidades personales, pueden quedar fuera del análisis factores organizacionales como la carga administrativa, la autonomía profesional, la seguridad, los equipos de apoyo y el liderazgo escolar.',
-      'El objetivo es analizar los desafíos del bienestar socioemocional del profesorado en Nuevo León desde una perspectiva institucional y sistémica. Se trata de una revisión documental y un análisis crítico, no de una investigación empírica original.'
-    ]},
-    { heading: '2. Marco epistemológico', paragraphs: [
-      'La perspectiva interpretativo-crítica permite examinar cómo se construyen las expectativas sobre el papel emocional del profesorado y cómo se relacionan con las condiciones institucionales. La perspectiva sistémica entiende el bienestar como un fenómeno vinculado con las interacciones entre docentes, equipos escolares, liderazgo, políticas educativas y entorno comunitario.',
-      'La perspectiva humanista sitúa la dignidad, la agencia profesional y las necesidades de las personas en el centro del análisis. Desde esta combinación, la educación socioemocional no puede reducirse a técnicas individuales: también requiere examinar las condiciones que permiten o dificultan su práctica sostenible.',
-      'Las categorías iniciales de análisis son: demandas emocionales y condiciones laborales; agotamiento profesional y fatiga por compasión; autonomía docente y carga administrativa; apoyo psicológico y colaboración entre pares; liderazgo escolar y responsabilidad institucional; y oferta formativa y políticas públicas de bienestar.'
-    ]},
-    { heading: '3. Metodología', paragraphs: [
-      'Se plantea una revisión documental exploratoria de fuentes académicas, normativas e institucionales relacionadas con el bienestar socioemocional docente en Nuevo León y México, complementada con literatura internacional pertinente. La selección final debe verificarse consultando los documentos originales y registrando autoría, fecha, título, publicación y enlace o DOI cuando corresponda.',
-      'Los criterios de inclusión previstos consideran la relación directa con bienestar docente, salud ocupacional, educación socioemocional o condiciones institucionales; la identificación bibliográfica suficiente; y la aportación de evidencia, conceptos o contexto para alguna categoría analítica.',
-      'El procedimiento consiste en localizar y verificar documentos, registrar sus datos bibliográficos, extraer fragmentos relevantes sin separarlos de su contexto, codificar contenidos en categorías temáticas, contrastar convergencias y vacíos, y distinguir evidencia documental, interpretación del autor y recomendaciones. La descripción reproducible de la búsqueda —bases de datos, términos, periodo, fechas de consulta y número final de documentos— sigue pendiente.'
-    ]},
-    { heading: '4. Resultados preliminares de la síntesis documental', paragraphs: [
-      'Los ejes que siguen son resultados preliminares derivados del documento de trabajo y están sujetos a verificación de fuentes; no son resultados de una investigación de campo realizada para este artículo.',
-      'Desajuste entre demandas emocionales y recursos institucionales. El documento de trabajo plantea que el profesorado asume responsabilidades de mediación de conflictos, inclusión, convivencia y acompañamiento emocional. La revisión debe precisar qué estudios respaldan cada aspecto y hasta dónde pueden generalizarse.',
-      'Condiciones de trabajo y agotamiento. Sieglin y Ramos Tovar (2007) estudiaron síntomas de depresión y ansiedad y su relación con factores laborales en una muestra no representativa de docentes de escuelas públicas del área metropolitana de Monterrey. Es un antecedente local relevante, pero no permite estimar la prevalencia actual en todo Nuevo León. Una revisión sistemática de Kariou et al. (2021) encontró asociaciones entre ciertas estrategias de trabajo emocional —en particular, la actuación superficial— y burnout docente, con resultados mixtos para otras estrategias.',
-      'Formación socioemocional: oportunidad y límite. Los cursos y diplomados pueden contribuir al desarrollo profesional, pero no sustituyen las condiciones organizacionales necesarias para sostener el bienestar. La vigencia, alcance y características de programas específicos deben comprobarse antes de afirmarlos.',
-      'Redes de apoyo y liderazgo escolar. La colaboración entre colegas, el apoyo psicológico accesible y un liderazgo sensible se proponen como líneas plausibles de acción. Su eficacia concreta para Nuevo León requiere estudios locales y evaluación de programas.'
-    ]},
-    { heading: '5. Discusión y conclusiones', paragraphs: [
-      'La discusión central consiste en evitar que el bienestar socioemocional se formule únicamente como responsabilidad individual del docente. La literatura aborda tanto el desarrollo de competencias emocionales y la preparación del profesorado como la relación entre condiciones laborales y malestar psicológico. Los resultados deben interpretarse según el contexto y las limitaciones de cada estudio.',
-      'Como líneas de acción institucional se propone: desarrollar mecanismos accesibles y confidenciales de orientación y apoyo psicológico; revisar tareas administrativas y priorizar actividades vinculadas con la enseñanza; reservar tiempos para comunidades de práctica y acompañamiento entre pares; y fortalecer la formación de directivos y supervisores en liderazgo sensible, manejo de conflictos y protección de la autonomía profesional.',
-      'En conclusión provisional, el bienestar socioemocional docente debe examinarse como una responsabilidad compartida y una condición de sostenibilidad educativa, no como una competencia aislada que cada profesor deba resolver por cuenta propia. Una política institucional coherente necesita articular formación, apoyo profesional, organización del trabajo, colaboración y liderazgo. La conclusión definitiva requiere completar la verificación de fuentes y delimitar el alcance de la evidencia documental.'
-    ]}
-  ],
-  references: [
-    'Bisquerra Alzina, R. (2003). Educación emocional y competencias básicas para la vida. Revista de Investigación Educativa, 21(1), 7–43. https://revistas.um.es/rie/article/view/99071',
-    'García Pérez, J. L., & Garza Ruíz, B. A. (2022). Educación socioemocional y formación docente. Revista RELEP: Educación y Pedagogía en Latinoamérica, 4(2), 32–45. https://doi.org/10.46990/relep.2022.4.2.606',
-    'Hascher, T., & Waber, J. (2021). Teacher well-being: A systematic review of the research literature from the year 2000–2019. Educational Research Review, 34, Article 100411. https://doi.org/10.1016/j.edurev.2021.100411',
-    'Kariou, A., Koutsimani, P., Montgomery, A., & Lainidi, O. (2021). Emotional labor and burnout among teachers: A systematic review. International Journal of Environmental Research and Public Health, 18(23), Article 12760. https://doi.org/10.3390/ijerph182312760',
-    'Sieglin, V., & Ramos Tovar, M. E. (2007). Estrés laboral y depresión entre maestros del área metropolitana de Monterrey. Revista Mexicana de Sociología, 69(3), 517–551. https://www.scielo.org.mx/scielo.php?pid=S0188-25032007000300005&script=sci_arttext',
-    'Yin, H., Huang, S., & Chen, G. (2019). The relationships between teachers’ emotional labor and their burnout and satisfaction: A meta-analytic review. Educational Research Review, 28, Article 100283. https://doi.org/10.1016/j.edurev.2019.100283'
-  ]
-};
-
-type Article = Omit<typeof article, 'sections'> & {
-  url?: string; method?: string; imageAlt?: string; event?: [string, string][]; sections: ArticleSection[];
-};
-const STATIC_ARTICLES: Article[] = [{ ...article, method: 'Revisión documental exploratoria' }, ARTICLE_002, ARTICLE_003];
+type Article = Omit<StaticArticle, 'imageAlt' | 'method'> & { url?: string; method?: string; imageAlt?: string };
+const STATIC_ARTICLES: Article[] = [ARTICLE_001, ARTICLE_002, ARTICLE_003];
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1600&q=80';
 const paragraphs = (s: unknown) => String(s || '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
 
 /** Convierte un artículo aprobado de la base de datos al formato de esta página. */
 function fromPost(p: Post, n: number): Article {
   const d = p.data || {};
-  const sections = [
-    { heading: '1. Introducción', paragraphs: paragraphs(d.intro) },
-    { heading: '2. Desarrollo', paragraphs: paragraphs(d.body) },
-    { heading: '3. Conclusiones', paragraphs: paragraphs(d.conclusion) },
-  ].filter(x => x.paragraphs.length);
+  const figs = parseFigures(d.figures).map((f, i) => ({ src: f.url, caption: `Figura ${i + 1}. ${f.title}${f.note ? '. ' + f.note : ''}` }));
+  const imryd = ARTICLE_PARTS.some(x => d[x.key]);
+  const sections: ArticleSection[] = imryd
+    ? ARTICLE_PARTS.map(x => ({ heading: x.label, paragraphs: paragraphs(d[x.key]), ...(x.key === 'resultados' && figs.length ? { figures: figs } : {}) })).filter(x => x.paragraphs.length)
+    : [
+      { heading: '1. Introducción', paragraphs: paragraphs(d.intro) },
+      { heading: '2. Desarrollo', paragraphs: paragraphs(d.body) },
+      { heading: '3. Conclusiones', paragraphs: paragraphs(d.conclusion) },
+    ].filter(x => x.paragraphs.length);
+  const ethics = [d.originalidad === 'si' && 'Los autores declaran que el artículo es original y que todas las fuentes están citadas.',
+    d.etica === 'si' && 'Los autores declaran el manejo ético de los datos y de los participantes.', d.usoIA && `Uso de inteligencia artificial: ${d.usoIA}`].filter(Boolean) as string[];
   const abstract = p.summary || '';
   return {
     id: String(n).padStart(3, '0'), category: d.category || 'Artículo', title: p.title,
     excerpt: abstract.length > 220 ? abstract.slice(0, 217) + '…' : abstract,
     date: formatDate(p.publishedAt || p.createdAt), image: d.image || FALLBACK_IMAGE,
     author: d.authors || p.authorName, keywords: d.keywords || '', abstract, sections,
-    references: Array.isArray(d.references) ? d.references : [], url: p.url,
+    references: refLines(d.references), url: p.url, area: d.area, pregunta: d.pregunta, objetivo: d.objetivo, ethics,
   };
 }
 
@@ -116,6 +72,11 @@ export default function BlogPage() {
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-amber-800">{active.category} · {active.date}</p>
           <h1 className="mt-4 font-serif text-3xl leading-tight sm:text-5xl">{active.id}. {active.title}</h1>
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-stone-600"><span className="inline-flex items-center gap-2"><UserRound size={15}/> {active.author}</span>{active.method && <span className="inline-flex items-center gap-2"><BookOpen size={15}/> {active.method}</span>}{active.url && <a href={active.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-amber-800 underline"><BookOpen size={15}/> Documento completo</a>}</div>
+          {(active.area || active.pregunta) && <dl className="mt-6 grid gap-x-4 gap-y-2 rounded-xl border border-stone-200 bg-white p-5 text-sm sm:grid-cols-[10rem_1fr]">
+            {active.area && <><dt className="text-xs font-bold uppercase tracking-wider text-amber-800">Área temática</dt><dd className="text-stone-700">{active.area}</dd></>}
+            {active.pregunta && <><dt className="text-xs font-bold uppercase tracking-wider text-amber-800">Pregunta de investigación</dt><dd className="text-stone-700">{active.pregunta}</dd></>}
+            {active.objetivo && <><dt className="text-xs font-bold uppercase tracking-wider text-amber-800">Objetivo</dt><dd className="text-stone-700">{active.objetivo}</dd></>}
+          </dl>}
           {active.abstract && <div className="mt-8 rounded-xl border border-stone-200 bg-white p-5 sm:p-7"><h2 className="font-serif text-2xl">Resumen</h2><p className="mt-3 whitespace-pre-line text-sm leading-7 text-stone-700">{active.abstract}</p>{active.keywords && <p className="mt-4 text-sm leading-7"><strong>Palabras clave:</strong> {active.keywords}</p>}</div>}
           {active.event && <dl className="mt-6 grid gap-x-4 gap-y-2 rounded-xl border border-stone-200 bg-white p-5 text-sm sm:grid-cols-[8rem_1fr]">
             {active.event.map(([k, v]) => <React.Fragment key={k}><dt className="text-xs font-bold uppercase tracking-wider text-amber-800">{k}</dt><dd className="text-stone-700">{v}</dd></React.Fragment>)}
@@ -124,7 +85,7 @@ export default function BlogPage() {
             {active.sections.map(section => <section key={section.heading} className="mb-9"><h2 className="font-serif text-2xl sm:text-3xl">{section.heading}</h2>
               {section.paragraphs.map((paragraph, i) => <p key={i} className="mt-4 whitespace-pre-line text-[15px] leading-8 text-stone-700">{paragraph}</p>)}
               {section.quote && <blockquote className="my-6 border-l-4 border-amber-700 pl-4 font-serif text-xl italic leading-snug text-stone-800">«{section.quote}»</blockquote>}
-              {section.figure && <figure className="my-6 overflow-hidden rounded-xl border border-stone-200 bg-white"><img src={section.figure.src} alt={section.figure.caption} loading="lazy" className="w-full" /><figcaption className="px-4 py-3 text-xs leading-5 text-stone-500">{section.figure.caption}</figcaption></figure>}
+              {[...(section.figure ? [section.figure] : []), ...(section.figures || [])].map(fg => <figure key={fg.src} className="my-6 overflow-hidden rounded-xl border border-stone-200 bg-white"><img src={fg.src} alt={fg.caption} loading="lazy" className="w-full" /><figcaption className="px-4 py-3 text-xs leading-5 text-stone-500">{fg.caption}</figcaption></figure>)}
               {section.table && <div className="my-6 overflow-x-auto rounded-xl border border-stone-200 bg-white"><table className="w-full text-left text-sm">
                 <thead className="bg-stone-100 text-xs uppercase tracking-wider text-stone-600"><tr>{section.table.headers.map((h, i) => <th key={i} className="p-3">{h}</th>)}</tr></thead>
                 <tbody>{section.table.rows.map((r, i) => <tr key={i} className="border-t border-stone-100 align-top">{r.map((c, j) => <td key={j} className={`p-3 ${j === 0 ? 'font-semibold text-stone-800' : 'text-stone-700'}`}>{c}</td>)}</tr>)}</tbody>
@@ -132,7 +93,8 @@ export default function BlogPage() {
               {section.box && <aside className="my-6 rounded-xl border border-amber-200 bg-amber-50 p-5"><p className="text-xs font-bold uppercase tracking-widest text-amber-900">{section.box.title}</p>
                 <ul className="mt-3 space-y-2">{section.box.items.map(([t, d]) => <li key={t} className="text-sm leading-6 text-stone-700"><strong className="text-stone-900">{t}.</strong> {d}</li>)}</ul></aside>}
             </section>)}
-            {active.references.length > 0 && <section className="mt-10 border-t border-stone-200 pt-8"><h2 className="font-serif text-2xl sm:text-3xl">Referencias</h2><ol className="mt-5 list-decimal space-y-4 pl-5">{active.references.map(ref => <li key={ref} className="break-words text-sm leading-7 text-stone-700">{ref}</li>)}</ol></section>}
+            {active.references.length > 0 && <section className="mt-10 border-t border-stone-200 pt-8"><h2 className="font-serif text-2xl sm:text-3xl">Referencias</h2><ul className="mt-5 space-y-4">{active.references.map(ref => <li key={ref} className="break-words pl-8 -indent-8 text-sm leading-7 text-stone-700">{ref}</li>)}</ul></section>}
+            {active.ethics && active.ethics.length > 0 && <section className="mt-8 rounded-xl border border-stone-200 bg-white p-5"><h2 className="font-serif text-xl">Declaraciones éticas</h2><ul className="mt-3 space-y-2 text-sm leading-6 text-stone-700">{active.ethics.map(x => <li key={x}>{x}</li>)}</ul></section>}
           </div>
         </div>
         <div className="border-t border-stone-200 px-5 py-5 text-center"><button onClick={() => setActive(null)} className="rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white hover:bg-amber-900">Volver a artículos</button></div>

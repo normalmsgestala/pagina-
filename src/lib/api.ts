@@ -10,6 +10,7 @@ export interface Post {
   id: number; kind: Kind; title: string; summary: string; url: string; moduleId: string;
   data: Record<string, any>; team: string; status: Status; authorName: string; authorId: number;
   reviewNote: string; createdAt: string; publishedAt: string | null;
+  review?: import('./articleRubric').ArticleEvaluation & { createdAt: string };
 }
 export interface CalendarEvent {
   id: number | string; date: string; title: string; description: string; mediaUrls: string[];

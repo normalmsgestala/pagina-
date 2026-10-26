@@ -163,7 +163,7 @@ export default function PanelPage() {
     </nav>
     {current === 'inicio' && <Home user={user} team={team} go={setTab} pending={approvals.count} />}
     {current === 'publicar' && <SubmitPanel user={user} team={team} />}
-    {current === 'mios' && <MySubmissions />}
+    {current === 'mios' && <MySubmissions user={user} />}
     {current === 'moderar' && <ModerationPanel onChange={approvals.refresh} />}
     {current === 'ia' && <AiTab user={user} />}
     {current === 'usuarios' && <UsersPanel me={user} />}

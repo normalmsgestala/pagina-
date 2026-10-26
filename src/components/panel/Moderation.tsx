@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Check, X, ExternalLink, Trash2, RefreshCw, Sparkles, Loader2 } from 'lucide-react';
 import { PendingProposals, MyProposals } from './Proposals';
-import { api, aiRun, formatDate, formatDateTime, KIND_LABEL, STATUS_LABEL, TEAM_LABEL, type CalendarEvent, type Post, type Team } from '../../lib/api';
+import { ArticleForm, EvaluationView } from './ArticleForm';
+import { ARTICLE_PARTS, parseFigures } from '../../lib/articleRubric';
+import { api, aiRun, formatDate, formatDateTime, KIND_LABEL, STATUS_LABEL, TEAM_LABEL, type CalendarEvent, type Post, type Team, type User } from '../../lib/api';
 
 const badge: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-900', approved: 'bg-emerald-100 text-emerald-900', rejected: 'bg-red-100 text-red-800',
@@ -17,9 +19,16 @@ function PostDetail({ p }: { p: Post }) {
   return <div className="space-y-2 text-sm text-stone-700">
     {p.summary && <p className="whitespace-pre-line">{p.summary}</p>}
     {p.kind === 'articulo' && <>
+      {p.review && <details open className="rounded-xl border border-stone-200 p-3"><summary className="cursor-pointer text-xs font-bold uppercase tracking-wider text-stone-600">Instrumento de arbitraje · {p.review.grade}/10 · {p.review.dictamen}</summary><div className="mt-3"><EvaluationView e={p.review} /></div></details>}
+      <p className="text-xs"><strong>Autoría:</strong> {d.authors} · <strong>Área:</strong> {d.area || '—'}</p>
       {d.keywords && <p className="text-xs"><strong>Palabras clave:</strong> {d.keywords}</p>}
-      {['intro', 'body', 'conclusion'].map((k, i) => d[k] && <div key={k}><p className="mt-2 text-xs font-bold uppercase text-stone-500">{['Introducción', 'Desarrollo', 'Conclusiones'][i]}</p><p className="whitespace-pre-line">{d[k]}</p></div>)}
-      {refs.length > 0 && <ol className="list-decimal pl-5 text-xs">{refs.map(r => <li key={r}>{r}</li>)}</ol>}
+      {d.pregunta && <p className="text-xs"><strong>Pregunta de investigación:</strong> {d.pregunta}</p>}
+      {d.objetivo && <p className="text-xs"><strong>Objetivo:</strong> {d.objetivo}</p>}
+      {ARTICLE_PARTS.map(part => d[part.key] && <div key={part.key}><p className="mt-2 text-xs font-bold uppercase text-stone-500">{part.label}</p><p className="whitespace-pre-line">{d[part.key]}</p></div>)}
+      {['intro', 'body', 'conclusion'].filter(k => !ARTICLE_PARTS.some(x => x.key === k) && d[k]).map(k => <p key={k} className="whitespace-pre-line">{d[k]}</p>)}
+      {parseFigures(d.figures).map((f, i) => <a key={i} href={f.url} target="_blank" rel="noreferrer" className="block text-xs text-amber-800 underline">Figura {i + 1}. {f.title}</a>)}
+      {refs.length > 0 && <><p className="mt-2 text-xs font-bold uppercase text-stone-500">Referencias</p><ol className="list-decimal pl-5 text-xs">{refs.map(r => <li key={r}>{r}</li>)}</ol></>}
+      <p className="text-xs text-stone-500">Originalidad: {d.originalidad === 'si' ? 'declarada' : 'no declarada'} · Ética: {d.etica === 'si' ? 'declarada' : 'no declarada'} · Uso de IA: {d.usoIA || '—'}</p>
     </>}
     {p.kind === 'fuente' && d.apa && <p className="rounded bg-stone-50 p-2 text-xs">{d.apa}</p>}
     {p.kind === 'podcast' && <p className="text-xs">Participantes: {d.participants} {d.duration && '· ' + d.duration}</p>}
@@ -140,8 +149,10 @@ function Actions({ status, note, setNote, onApprove, onReject, onDelete }: {
   </div>;
 }
 
-export function MySubmissions() {
+export function MySubmissions({ user }: { user?: User }) {
   const [posts, setPosts] = useState<Post[] | null>(null);
+  const [editing, setEditing] = useState<Post | null>(null);
+  const [openRv, setOpenRv] = useState<number | null>(null);
   const [error, setError] = useState('');
   const load = useCallback(() => { api<{ posts: Post[] }>('posts?mine=1').then(r => setPosts(r.posts)).catch(e => setError(e.message)); }, []);
   useEffect(() => { load(); }, [load]);
@@ -151,16 +162,25 @@ export function MySubmissions() {
   };
   if (error) return <p className="text-sm text-red-700">{error}</p>;
   if (!posts) return <p className="text-sm text-stone-500">Cargando…</p>;
+  if (editing && user) return <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5 sm:p-7">
+    <div className="flex items-center justify-between gap-3"><h3 className="font-serif text-2xl">Corregir y reenviar</h3><button onClick={() => setEditing(null)} className="text-sm text-stone-500 underline">Volver a mis envíos</button></div>
+    {editing.review && <EvaluationView e={editing.review} />}
+    <ArticleForm user={user} initial={{ id: editing.id, title: editing.title, summary: editing.summary, url: editing.url, moduleId: editing.moduleId, data: editing.data }}
+      onDone={() => { setEditing(null); load(); }} />
+  </div>;
   if (!posts.length) return <div className="space-y-4"><MyProposals /><p className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">Todavía no has enviado artículos, podcasts ni evidencias.</p></div>;
   return <div className="space-y-4"><MyProposals /><div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
     <table className="w-full text-left text-sm">
       <thead className="bg-stone-50 text-xs uppercase text-stone-500"><tr><th className="p-3">Tipo</th><th className="p-3">Título</th><th className="p-3">Enviado</th><th className="p-3">Estado</th><th className="p-3"></th></tr></thead>
       <tbody>{posts.map(p => <tr key={p.id} className="border-t border-stone-100 align-top">
         <td className="p-3 text-xs">{KIND_LABEL[p.kind]}</td>
-        <td className="p-3">{p.title}{p.reviewNote && <p className="mt-1 text-xs text-stone-500">Comentario: {p.reviewNote}</p>}</td>
+        <td className="p-3">{p.title}{p.reviewNote && <p className="mt-1 text-xs text-stone-500">{p.reviewNote.startsWith('Devuelto') ? '' : 'Comentario: '}{p.reviewNote}</p>}
+          {p.review && <button onClick={() => setOpenRv(openRv === p.id ? null : p.id)} className="mt-1 text-xs font-semibold text-amber-800 underline">Rúbrica: {p.review.grade}/10 {openRv === p.id ? '▲' : '▼'}</button>}
+          {openRv === p.id && p.review && <div className="mt-2"><EvaluationView e={p.review} /></div>}</td>
         <td className="whitespace-nowrap p-3 text-xs text-stone-500">{formatDateTime(p.createdAt)}</td>
         <td className="p-3"><StatusBadge status={p.status} /></td>
-        <td className="p-3">{p.status !== 'approved' && <button onClick={() => remove(p.id)} className="text-xs text-red-700 underline">Eliminar</button>}</td>
+        <td className="space-y-1 p-3 text-right">{p.kind === 'articulo' && p.status !== 'approved' && user && <button onClick={() => setEditing(p)} className="block whitespace-nowrap rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white">Corregir y reenviar</button>}
+          {p.status !== 'approved' && <button onClick={() => remove(p.id)} className="text-xs text-red-700 underline">Eliminar</button>}</td>
       </tr>)}</tbody>
     </table>
   </div></div>;

@@ -3,6 +3,7 @@ import { FileText, Mic, FolderOpen, BookMarked, Camera, CalendarPlus, Send, Chec
 import { INITIAL_CURRICULUM } from '../../data/defaultCurriculum';
 import { api, apaReference, CONSISTENCY_NOTE, isMod, KINDS_BY_TEAM, CALENDAR_TEAMS, KIND_LABEL, type AiTask, type Kind, type Role, type Team, type User } from '../../lib/api';
 import { AiAssist } from './AiAssist';
+import { ArticleForm } from './ArticleForm';
 
 type FormKind = Kind | 'calendario';
 const ICONS: Record<FormKind, any> = { articulo: FileText, podcast: Mic, documento: FolderOpen, fuente: BookMarked, evidencia: Camera, calendario: CalendarPlus };
@@ -55,7 +56,7 @@ export function SubmitPanel({ user, team }: { user: User; team: Team | '' }) {
     {done && <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
       <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
       <div><strong>{done.kind === 'calendario' ? 'Fecha enviada.' : KIND_LABEL[done.kind as Kind] + ' enviado.'}</strong>{' '}
-        {done.status === 'approved' ? 'Ya está publicado en la página.' : 'Un capitán lo revisará antes de publicarlo. Puedes ver su estado en "Mis envíos".'}</div>
+        {done.status === 'approved' ? 'Ya está publicado en la página.' : done.kind === 'articulo' ? 'Cumplió el instrumento de arbitraje; un capitán lo revisará antes de publicarlo.' : 'Un capitán lo revisará antes de publicarlo. Puedes ver su estado en "Mis envíos".'}</div>
     </div>}
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {forms.map(k => {
@@ -68,7 +69,9 @@ export function SubmitPanel({ user, team }: { user: User; team: Team | '' }) {
         </button>;
       })}
     </div>
-    {active && <FormFor key={active} kind={active} user={user} onDone={status => { setDone({ kind: active, status }); setActive(null); }} />}
+    {active === 'articulo' && <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-7"><h3 className="mb-4 font-serif text-2xl">Nuevo artículo</h3>
+      <ArticleForm key="articulo" user={user} onDone={status => { setDone({ kind: 'articulo', status }); setActive(null); }} /></div>}
+    {active && active !== 'articulo' && <FormFor key={active} kind={active} user={user} onDone={status => { setDone({ kind: active, status }); setActive(null); }} />}
   </div>;
 }
 
@@ -109,23 +112,6 @@ function FormFor({ kind, user, onDone }: { kind: FormKind; user: User; onDone: (
   return <form onSubmit={submit} className="space-y-5 rounded-2xl border border-stone-200 bg-white p-5 sm:p-7">
     <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{CONSISTENCY_NOTE.replace('La IA junta tu aporte con el contenido existente sin agregar información nueva, y un capitán', 'Un capitán')}</p>
     <h3 className="font-serif text-2xl">{kind === 'calendario' ? 'Nueva fecha en el calendario' : 'Nuevo ' + KIND_LABEL[kind as Kind].toLowerCase()}</h3>
-
-    {kind === 'articulo' && <div className="grid gap-4 sm:grid-cols-2">
-      <Field label="Título del artículo *" wide><input required maxLength={300} value={v('title')} onChange={set('title')} className={input} placeholder="Ej. La energía mecánica en una montaña rusa" /></Field>
-      <Field label="Autor(es) *" hint="Separa con coma si son varios."><input required value={v('authors')} onChange={set('authors')} className={input} /></Field>
-      <Field label="Categoría"><select value={v('category')} onChange={set('category')} className={input}>
-        <option value="">Selecciona…</option><option>Investigación educativa</option><option>Divulgación científica</option>
-        <option>Experiencia de aula</option><option>Reseña</option><option>Proyecto del semestre</option></select></Field>
-      <Field label="Resumen *" hint="Entre 100 y 250 palabras: tema, objetivo, método y hallazgos." wide><textarea required rows={4} value={v('summary')} onChange={set('summary')} className={input} /></Field>
-      <Field label="Palabras clave" hint="Separadas por punto y coma ( ; )" wide><input value={v('keywords')} onChange={set('keywords')} className={input} placeholder="energía; movimiento; didáctica" /></Field>
-      <Field label="1. Introducción *" hint="Contexto, problema y objetivo." wide><textarea required rows={5} value={v('intro')} onChange={set('intro')} className={input} /></Field>
-      <Field label="2. Desarrollo *" hint="Marco teórico, metodología y resultados. Separa párrafos con una línea en blanco." wide><textarea required rows={9} value={v('body')} onChange={set('body')} className={input} /></Field>
-      <Field label="3. Conclusiones *" wide><textarea required rows={4} value={v('conclusion')} onChange={set('conclusion')} className={input} /></Field>
-      <Field label="Referencias (APA, una por línea)" wide><textarea rows={4} value={v('references')} onChange={set('references')} className={input} placeholder="Apellido, A. (Año). Título. Editorial. https://..." /></Field>
-      <Field label="Imagen de portada (enlace, opcional)"><input type="url" value={v('image')} onChange={set('image')} className={input} placeholder="https://..." /></Field>
-      <Field label="Documento completo (enlace, opcional)"><input type="url" value={v('url')} onChange={set('url')} className={input} placeholder="https://drive.google.com/..." /></Field>
-      {moduleSelect}
-    </div>}
 
     {kind === 'podcast' && <div className="grid gap-4 sm:grid-cols-2">
       <Field label="Título del episodio *" wide><input required maxLength={300} value={v('title')} onChange={set('title')} className={input} /></Field>
