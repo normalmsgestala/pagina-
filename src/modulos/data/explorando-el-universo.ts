@@ -74,7 +74,7 @@ export const explorandoElUniverso: Modulo = {
     { titulo: 'Historieta de Leo y Clara', tipo: 'pdf', archivo: 'Historieta_Leo_y_Clara.pdf', descripcion: '8 viñetas para imprimir y pegar en tu libreta.' },
     { titulo: 'Instructivo del telescopio casero', tipo: 'pdf', archivo: 'Instructivo_telescopio_casero.pdf', descripcion: 'Materiales, pasos, cómo enfocar y cómo resolver problemas.' },
     { titulo: 'Ejemplo de libreta', tipo: 'pdf', archivo: 'Ejemplo_libreta_del_alumno.pdf', descripcion: 'Así puede quedar tu libreta al final del proyecto.' },
-    { titulo: 'Todas las fichas para imprimir', tipo: 'pdf', archivo: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf', descripcion: 'Las 10 fichas de trabajo en un solo archivo.' },
+    { titulo: 'Todas las fichas para imprimir', tipo: 'pdf', archivo: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf', descripcion: 'Las 10 fichas de trabajo en un solo archivo.' },
   ],
   evidencia:
     'Inventas y construyes un telescopio casero con tubos de cartón y lupas de reúso. En tu libreta llevas tu diseño: el dibujo de sus partes y la explicación de cómo junta y agranda la luz. Lo presentas en 2 minutos para explicar por qué los ojos no pueden ver los cuerpos celestes como son y qué sabemos hoy de cómo está hecho el Universo y cómo ha cambiado.',
@@ -113,7 +113,7 @@ export const explorandoElUniverso: Modulo = {
           simuladores: ['ojo-vs-telescopio'],
           entrega: 'Foto de tu Ficha 1 y de tu dibujo en la libreta',
           ficha: {
-            numero: 1, titulo: '¿Por qué no veo la estrella como es?', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=1',
+            numero: 1, titulo: '¿Por qué no veo la estrella como es?', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=1',
             instruccion: 'Lee la historieta "Leo y Clara: lo que los ojos no ven" y responde.',
             preguntas: [
               { id: 'f1p1', texto: '¿Cómo veía Leo la estrella? ¿Cómo es una estrella en realidad?' },
@@ -138,7 +138,7 @@ export const explorandoElUniverso: Modulo = {
           simuladores: ['luz-que-no-ves'],
           entrega: 'Foto de tu Ficha 2',
           ficha: {
-            numero: 2, titulo: 'Lo que mis ojos no ven', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=2',
+            numero: 2, titulo: 'Lo que mis ojos no ven', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=2',
             lectura: {
               titulo: 'El ojo, un detector de luz con límites',
               parrafos: [
@@ -180,7 +180,7 @@ export const explorandoElUniverso: Modulo = {
           entrega: 'Foto de tu Ficha 3 firmada',
           seguridad: true,
           ficha: {
-            numero: 3, titulo: 'Mi plan de investigación', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=3',
+            numero: 3, titulo: 'Mi plan de investigación', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=3',
             instruccion: 'Tu plan está en la portada del tema (sección "Mi plan de investigación"). Léelo y contesta.',
             preguntas: [
               { id: 'f3p1', texto: 'Material de reúso que voy a traer (marca lo que ya tienes):', tipo: 'casillas', opciones: ['Rollo de servitoallas', 'Rollo de papel higiénico', 'Papel o cartón negro', 'Cinta y ligas', 'Lupa grande', 'Lupa chica'] },
@@ -204,7 +204,7 @@ export const explorandoElUniverso: Modulo = {
           simuladores: ['cuerda-de-ondas', 'luz-que-no-ves'],
           entrega: 'Foto de tu Ficha 4 con tus dibujos de ondas',
           ficha: {
-            numero: 4, titulo: 'La luz que viaja por el Universo', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=4',
+            numero: 4, titulo: 'La luz que viaja por el Universo', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=4',
             lectura: {
               parrafos: [
                 'La luz es una onda electromagnética: viaja por el espacio aunque no haya aire. De la más larga a la más corta están: radio, microondas, infrarrojo, luz visible, ultravioleta, rayos X y rayos gamma. El ojo solo ve la luz visible.',
@@ -235,7 +235,7 @@ export const explorandoElUniverso: Modulo = {
           entrega: 'Foto de tu Ficha 5 con las medidas de tus lupas',
           seguridad: true,
           ficha: {
-            numero: 5, titulo: 'Cómo un telescopio atrapa la luz', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=5',
+            numero: 5, titulo: 'Cómo un telescopio atrapa la luz', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=5',
             lectura: {
               parrafos: [
                 'Cuando la luz pasa del aire al agua o al vidrio, se dobla: eso es refracción. La lupa es más gruesa en el centro, dobla la luz y la junta en un punto.',
@@ -265,7 +265,7 @@ export const explorandoElUniverso: Modulo = {
           simuladores: ['mirar-el-pasado', 'historia-universo', 'lo-que-no-se-ve'],
           entrega: 'Foto de tu Ficha 6 y de tu dibujo del Universo',
           ficha: {
-            numero: 6, titulo: '¿De qué está hecho el Universo y cómo ha cambiado?', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=6',
+            numero: 6, titulo: '¿De qué está hecho el Universo y cómo ha cambiado?', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=6',
             lectura: {
               parrafos: [
                 'Lo que vemos (estrellas, planetas, polvo y nosotros) es apenas como el 5 %. Como el 27 % es materia oscura: no da luz, pero su gravedad hace que las galaxias giren más rápido. El 68 % es energía oscura, que hace que el Universo crezca cada vez más rápido.',
@@ -307,7 +307,7 @@ export const explorandoElUniverso: Modulo = {
           recursos: ['Fichas 1 a 7'],
           entrega: 'Foto de tu Ficha 7',
           ficha: {
-            numero: 7, titulo: 'Lo que descubrí', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=7',
+            numero: 7, titulo: 'Lo que descubrí', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=7',
             instruccion: 'Responde cada pregunta y di en qué ficha o experimento lo aprendiste.',
             preguntas: [
               { id: 'f7p1', texto: '1. ¿Por qué a simple vista las estrellas se ven como puntitos si en realidad son enormes?' },
@@ -349,7 +349,7 @@ export const explorandoElUniverso: Modulo = {
           entrega: 'Foto de tu diseño en la libreta y de tu telescopio terminado',
           seguridad: true,
           ficha: {
-            numero: 8, titulo: 'Invento mi telescopio', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=8',
+            numero: 8, titulo: 'Invento mi telescopio', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=8',
             preguntas: [
               { id: 'f8p1', texto: '¿Para qué sirve cada parte de tu telescopio? (lupa grande, lupa chica, tubo grande, tubo que se desliza, forro negro)' },
               { id: 'f8p2', texto: '¿Qué materiales de reúso usaste?' },
@@ -375,7 +375,7 @@ export const explorandoElUniverso: Modulo = {
           entrega: 'Foto o video de tu presentación con tu telescopio (evidencia final)',
           seguridad: true,
           ficha: {
-            numero: 9, titulo: 'Presento mi invento', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=9',
+            numero: 9, titulo: 'Presento mi invento', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=9',
             instruccion: 'Escribe el guion de tu presentación de 2 minutos.',
             preguntas: [
               { id: 'f9p1', texto: 'Parte 1: ¿Por qué los ojos no pueden ver los cuerpos celestes como son?' },
@@ -410,7 +410,7 @@ export const explorandoElUniverso: Modulo = {
           recursos: ['Ficha 10', 'Tu libreta completa'],
           entrega: 'Foto de tu Ficha 10 y de la portada de tu libreta',
           ficha: {
-            numero: 10, titulo: 'Mirar hacia adentro', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10.pdf#page=10',
+            numero: 10, titulo: 'Mirar hacia adentro', pdf: 'Fichas_sin_contestar_Sesiones_1_a_10 (1).pdf#page=10',
             preguntas: [
               { id: 'f10p1', texto: '¿Qué se me facilitó y qué se me dificultó? ¿Por qué?' },
               { id: 'f10p2', texto: '¿Seguí mi plan? ¿Qué cambié?' },
