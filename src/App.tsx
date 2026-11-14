@@ -187,6 +187,7 @@ export default function App() {
               1° Semestre
             </button>
 
+            <a href="/?modulos=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Módulos ↗</a>
             <a href="/?articles=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Artículos ↗</a>
             <a href="/?podcast=1" className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-amber-800">Podcast ↗</a>
             {canEdit && (
