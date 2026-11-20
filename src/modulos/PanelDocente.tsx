@@ -46,7 +46,7 @@ export function PanelDocente({ usuario }: { usuario: Usuario }) {
       ef.forEach((e, i) => hojaFases.push([u.nombre, u.email, e.numero, m.fases[i].nombre, e.sesionesTerminadas, e.sesionesTotal, e.repaso === null ? '' : Math.round(e.repaso * 100), f.progreso.repasos[e.numero]?.intentos ?? 0, e.aprobada ? 'Sí' : 'No']));
       for (const fase of m.fases) for (const s of fase.sesiones) {
         const ps = f.progreso.sesiones[s.numero]; if (!ps) continue;
-        const preguntas = [...s.ficha.preguntas.map((x) => ({ id: x.id, t: x.texto })), ...(s.numero === 3 ? m.plan.map((_, i) => ({ id: `plan${i + 1}`, t: `Actividad del plan ${i + 1}` })) : [])];
+        const preguntas = [...s.ficha.preguntas.map((x) => ({ id: x.id, t: x.texto })), ...(m.id === 'explorando-el-universo' && s.numero === 3 ? m.plan.map((_, i) => ({ id: `plan${i + 1}`, t: `Actividad del plan ${i + 1}` })) : [])];
         for (const p of preguntas) if (ps.respuestas[p.id]) hojaResp.push([u.nombre, u.email, s.numero, p.t, ps.respuestas[p.id].replace(/\|/g, ', '), ps.simuladores.join(', '), ps.terminada ? 'Sí' : 'No']);
         if (!preguntas.some((p) => ps.respuestas[p.id])) hojaResp.push([u.nombre, u.email, s.numero, '', '', ps.simuladores.join(', '), ps.terminada ? 'Sí' : 'No']);
       }
