@@ -15,6 +15,7 @@ export interface PlanItem {
 export interface Lectura {
   titulo?: string;
   parrafos: string[];
+  fuente?: string; // de dónde viene la lectura (libro y página)
 }
 
 export interface PreguntaFicha {
@@ -45,7 +46,8 @@ export interface Sesion {
   ficha: Ficha;
   simuladores?: string[]; // ids de simuladores
   entrega: string; // qué foto sube el alumno
-  seguridad?: boolean; // muestra la regla de seguridad del Sol
+  seguridad?: boolean; // muestra una regla de seguridad
+  seguridadTexto?: string; // texto propio; si falta, se usa la regla del Sol
 }
 
 export interface PreguntaRepaso {
