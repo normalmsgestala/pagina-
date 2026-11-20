@@ -26,7 +26,7 @@ async function hashPass(pass: string, salt: string) {
 const igual = (a: string, b: string) => { if (a.length !== b.length) return false; let r = 0; for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i); return r === 0; };
 
 interface FilaUsuario { id: string; email: string; nombre: string; edad: number; escuela: string; ciudad: string; estado: string; rol: string; staff: number; admin: number; creado: string; pass_hash?: string; pass_salt?: string }
-const publico = (u: FilaUsuario) => ({ id: u.id, email: u.email, nombre: u.nombre, edad: u.edad, escuela: u.escuela, ciudad: u.ciudad, estado: u.estado, rol: u.rol, staff: !!u.staff || !!u.admin, admin: !!u.admin, creado: u.creado });
+const publico = (u: FilaUsuario) => ({ id: u.id, email: u.email, nombre: u.nombre, edad: u.edad, escuela: u.escuela, ciudad: u.ciudad, estado: u.estado, rol: u.rol, staff: !!u.admin, admin: !!u.admin, creado: u.creado });
 const esAdminEmail = (env: Env, email: string) => (env.MODULOS_ADMIN_EMAILS || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean).includes(email.toLowerCase());
 
 async function usuarioDe(req: Request, env: Env): Promise<FilaUsuario | null> {
@@ -108,7 +108,7 @@ export const onRequest = async ({ request, env, params }: Ctx): Promise<Response
     }
 
     if (!u) return error('Inicia sesión.', 401);
-    const staff = !!u.staff || !!u.admin;
+    const staff = !!u.admin; // solo el administrador ve el panel docente
 
     if (ruta === 'yo') return json({ usuario: publico(u) });
     if (ruta === 'auth/salir' && metodo === 'POST') {
@@ -207,7 +207,7 @@ export const onRequest = async ({ request, env, params }: Ctx): Promise<Response
 
     // ---------- Panel docente ----------
     if (ruta.startsWith('admin/') || ruta.startsWith('docente/')) {
-      if (!staff) return error('Solo docentes con permiso.', 403);
+      if (!staff) return error('Solo el administrador puede ver el panel docente.', 403);
 
       if (ruta === 'admin/usuarios') {
         const r = await env.MODULOS_DB.prepare('SELECT * FROM usuarios ORDER BY creado DESC').all<FilaUsuario>();
