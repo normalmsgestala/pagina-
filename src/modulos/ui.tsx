@@ -37,10 +37,12 @@ export const Campo: React.FC<{ label: string; children: React.ReactNode }> = ({ 
 
 export const inputCls = 'w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-amber-500';
 
-export const Seguridad = () => (
+export const Seguridad = ({ texto }: { texto?: string }) => (
   <div className="flex gap-3 items-start rounded-xl border-2 border-red-300 bg-red-50 p-4 text-red-900">
-    <span className="text-2xl leading-none" aria-hidden>☀️</span>
-    <p className="text-sm sm:text-base"><b>Regla de oro:</b> nunca mires al Sol con una lupa ni con tu telescopio. Puedes dañar tus ojos para siempre.</p>
+    <span className="text-2xl leading-none" aria-hidden>{texto ? '⚠️' : '☀️'}</span>
+    {texto
+      ? <p className="text-sm sm:text-base"><b>Cuidado:</b> {texto}</p>
+      : <p className="text-sm sm:text-base"><b>Regla de oro:</b> nunca mires al Sol con una lupa ni con tu telescopio. Puedes dañar tus ojos para siempre.</p>}
   </div>
 );
 
