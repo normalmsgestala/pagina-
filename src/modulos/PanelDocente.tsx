@@ -83,7 +83,7 @@ export function PanelDocente({ usuario }: { usuario: Usuario }) {
       </div>
 
       <div className="flex gap-1 border-b border-stone-200 overflow-x-auto">
-        {([['resumen', 'Resumen'], ['alumnos', `Alumnos (${visibles.length})`], ['entregas', `Entregas por revisar (${pendientes.length})`], ['materiales', 'Materiales del docente'], ...(usuario.admin ? [['usuarios', 'Permisos']] : [])] as [Pestana, string][]).map(([k, t]) => (
+        {([['resumen', 'Resumen'], ['alumnos', `Alumnos (${visibles.length})`], ['entregas', `Entregas por revisar (${pendientes.length})`], ['materiales', 'Materiales del docente']] as [Pestana, string][]).map(([k, t]) => (
           <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px cursor-pointer ${tab === k ? 'border-amber-700 text-amber-800' : 'border-transparent text-stone-600'}`}>{t}</button>
         ))}
       </div>
