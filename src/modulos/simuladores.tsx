@@ -351,6 +351,124 @@ const LoQueNoSeVe: React.FC<Props> = ({ onUse }) => {
   );
 };
 
+
+// ================================================================
+// Módulo "Física en movimiento"
+// ================================================================
+const Carrito: React.FC<{ x: number; y: number }> = ({ x, y }) => (
+  <g transform={`translate(${x} ${y})`}>
+    <rect x="-22" y="-20" width="44" height="18" rx="5" fill="#c2410c" />
+    <rect x="-12" y="-30" width="22" height="12" rx="3" fill="#fdba74" />
+    <circle cx="-12" cy="0" r="6" fill="#1c1917" /><circle cx="12" cy="0" r="6" fill="#1c1917" />
+  </g>
+);
+
+const ControlaMovimiento: React.FC<Props> = ({ onUse }) => {
+  const usar = useUsoUnaVez(onUse);
+  const [d, setD] = useState(1); // metros
+  const [t, setT] = useState(4); // segundos
+  const [aviso, setAviso] = useState('Mueve los controles y presiona «Calcular».');
+  const [resultado, setResultado] = useState<string | null>(null);
+  const [pos, setPos] = useState(0); // 0 a 1 del recorrido
+  const anim = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(anim.current), []);
+  const inicioX = 40, escala = 160; // px por metro
+  const cambiarD = (v: number) => {
+    usar(); setResultado(null); setPos(0);
+    setAviso(v > d ? 'La velocidad media aumenta: recorre más distancia en el mismo tiempo.' : v < d ? 'La velocidad media disminuye: recorre menos distancia en el mismo tiempo.' : aviso);
+    setD(v);
+  };
+  const cambiarT = (v: number) => {
+    usar(); setResultado(null); setPos(0);
+    setAviso(v > t ? 'La velocidad media disminuye: tarda más en recorrer la misma distancia.' : v < t ? 'La velocidad media aumenta: tarda menos en recorrer la misma distancia.' : aviso);
+    setT(v);
+  };
+  const calcular = () => {
+    usar(); cancelAnimationFrame(anim.current);
+    const dur = t * 1000 * 0.5; // la animación va al doble de rapidez para no esperar tanto
+    const t0 = performance.now();
+    const paso = (ahora: number) => {
+      const k = Math.min(1, (ahora - t0) / dur); setPos(k);
+      if (k < 1) anim.current = requestAnimationFrame(paso);
+    };
+    anim.current = requestAnimationFrame(paso);
+    const v = d / t;
+    setResultado(`v = d ÷ t = ${d.toFixed(1)} m ÷ ${t.toFixed(1)} s = ${v.toFixed(2)} m/s`);
+  };
+  const metaX = inicioX + d * escala;
+  return (
+    <div className="space-y-3">
+      <svg viewBox="0 0 400 120" className="w-full rounded-xl bg-white border border-stone-200">
+        <rect x="20" y="78" width="370" height="10" rx="3" fill="#d6d3d1" />
+        {[0, 0.5, 1, 1.5, 2].map((m) => (
+          <g key={m}><line x1={inicioX + m * escala} x2={inicioX + m * escala} y1="88" y2="96" stroke="#78716c" /><text x={inicioX + m * escala} y="110" fontSize="10" textAnchor="middle" fill="#57534e">{m} m</text></g>
+        ))}
+        <line x1={inicioX} x2={inicioX} y1="40" y2="78" stroke="#15803d" strokeWidth="2" strokeDasharray="4 3" />
+        <text x={inicioX} y="34" fontSize="10" textAnchor="middle" fill="#15803d">salida</text>
+        <line x1={metaX} x2={metaX} y1="40" y2="78" stroke="#b91c1c" strokeWidth="2" strokeDasharray="4 3" />
+        <text x={metaX} y="34" fontSize="10" textAnchor="middle" fill="#b91c1c">meta</text>
+        <Carrito x={inicioX + pos * d * escala} y={78} />
+      </svg>
+      <label className="block text-sm font-semibold text-stone-700">Distancia: {d.toFixed(1)} m</label>
+      <input type="range" min={0.5} max={2} step={0.1} value={d} onChange={(e) => cambiarD(+e.target.value)} className="w-full accent-amber-700" />
+      <label className="block text-sm font-semibold text-stone-700">Tiempo: {t.toFixed(1)} s</label>
+      <input type="range" min={1} max={10} step={0.5} value={t} onChange={(e) => cambiarT(+e.target.value)} className="w-full accent-amber-700" />
+      <Boton activo onClick={calcular}>Calcular</Boton>
+      <Mensaje>{aviso}{resultado && <span className="block mt-1 font-semibold">{resultado}</span>}</Mensaje>
+    </div>
+  );
+};
+
+const SUPERFICIES = {
+  lisa: { nombre: 'Lisa', alcance: 1, color: '#e7e5e4', texto: 'En esta simulación el carrito recorre una distancia mayor.' },
+  tela: { nombre: 'Tela', alcance: 0.6, color: '#bfdbfe', texto: 'El recorrido es intermedio en este ejemplo.' },
+  rugosa: { nombre: 'Rugosa (lija)', alcance: 0.32, color: '#a8a29e', texto: 'La fricción se opone al movimiento y el carrito se detiene en menor distancia en este ejemplo.' },
+} as const;
+type Sup = keyof typeof SUPERFICIES;
+
+const SuperficieFrena: React.FC<Props> = ({ onUse }) => {
+  const usar = useUsoUnaVez(onUse);
+  const [sup, setSup] = useState<Sup>('lisa');
+  const [pos, setPos] = useState(0);
+  const [termino, setTermino] = useState(false);
+  const anim = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(anim.current), []);
+  const inicioX = 40, largo = 330;
+  const elegir = (k: Sup) => { usar(); cancelAnimationFrame(anim.current); setSup(k); setPos(0); setTermino(false); };
+  const iniciar = () => {
+    usar(); cancelAnimationFrame(anim.current); setTermino(false);
+    const alcance = SUPERFICIES[sup].alcance, dur = 600 + 1800 * alcance, t0 = performance.now();
+    const paso = (ahora: number) => {
+      const k = Math.min(1, (ahora - t0) / dur);
+      setPos(alcance * (1 - (1 - k) * (1 - k))); // frena poco a poco
+      if (k < 1) anim.current = requestAnimationFrame(paso); else setTermino(true);
+    };
+    anim.current = requestAnimationFrame(paso);
+  };
+  const s = SUPERFICIES[sup];
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">{(Object.keys(SUPERFICIES) as Sup[]).map((k) => <Boton key={k} activo={sup === k} onClick={() => elegir(k)}>{SUPERFICIES[k].nombre}</Boton>)}</div>
+      <svg viewBox="0 0 400 110" className="w-full rounded-xl bg-white border border-stone-200">
+        <defs>
+          <pattern id="rugoso" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#a8a29e" /><circle cx="2" cy="2" r="1.2" fill="#57534e" /><circle cx="5" cy="4.5" r="1" fill="#78716c" /></pattern>
+          <pattern id="tela" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#bfdbfe" /><path d="M0 3h6M3 0v6" stroke="#93c5fd" strokeWidth="1" /></pattern>
+        </defs>
+        <rect x="20" y="70" width="370" height="14" rx="3" fill={sup === 'rugosa' ? 'url(#rugoso)' : sup === 'tela' ? 'url(#tela)' : s.color} stroke="#a8a29e" />
+        <line x1={inicioX} x2={inicioX} y1="30" y2="70" stroke="#15803d" strokeWidth="2" strokeDasharray="4 3" />
+        <text x={inicioX} y="24" fontSize="10" textAnchor="middle" fill="#15803d">mismo impulso</text>
+        {termino && <g><line x1={inicioX} x2={inicioX + pos * largo} y1="96" y2="96" stroke="#b45309" strokeWidth="2" /><text x={inicioX + (pos * largo) / 2} y="106" fontSize="10" textAnchor="middle" fill="#92400e">distancia recorrida</text></g>}
+        <Carrito x={inicioX + pos * largo} y={70} />
+      </svg>
+      <Boton activo onClick={iniciar}>Iniciar prueba</Boton>
+      <Mensaje>
+        <b>Superficie {s.nombre.toLowerCase()}.</b> {termino ? s.texto : 'Presiona «Iniciar prueba». El impulso es el mismo en todas las superficies.'}
+        {termino && <span className="block mt-1 text-stone-600">Los resultados reales pueden variar según el material y el impulso.</span>}
+      </Mensaje>
+    </div>
+  );
+};
+
 // ----------------------------------------------------------------
 export const SIMULADORES: Record<string, InfoSimulador> = {
   'ojo-vs-telescopio': { id: 'ojo-vs-telescopio', titulo: 'Ojo vs. telescopio', instruccion: 'Mueve la barra para cambiar el tamaño de la abertura que junta la luz. Observa las estrellas y la Luna.', reflexion: ['¿Qué cambió en el cielo cuando la abertura fue más grande?', '¿Por qué tu ojo solo ve las estrellas más brillantes?'], Componente: OjoVsTelescopio },
@@ -360,5 +478,7 @@ export const SIMULADORES: Record<string, InfoSimulador> = {
   'arma-telescopio': { id: 'arma-telescopio', titulo: 'Arma tu telescopio', instruccion: 'Escoge tus dos lupas y ajusta el largo del tubo hasta que la imagen quede enfocada.', reflexion: ['¿Qué combinación de lupas acerca más?', '¿Cómo sabes qué largo debe tener tu tubo?'], Componente: ArmaTelescopio },
   'mirar-el-pasado': { id: 'mirar-el-pasado', titulo: 'Mirar lejos es mirar el pasado', instruccion: 'Mueve la barra para viajar desde la Luna hasta las galaxias más lejanas.', reflexion: ['¿Por qué al mirar una estrella vemos el pasado?'], Componente: MirarElPasado },
   'historia-universo': { id: 'historia-universo', titulo: 'La historia del Universo', instruccion: 'Avanza escena por escena para recorrer la historia del Universo.', reflexion: ['¿Cómo era el Universo al principio y cómo es hoy?'], Componente: HistoriaUniverso },
+  'fm-controla-movimiento': { id: 'fm-controla-movimiento', titulo: 'Controla el movimiento', instruccion: 'Mueve la distancia y el tiempo, y presiona «Calcular» para ver la velocidad media del carrito.', reflexion: ['¿Qué sucede con la velocidad si duplicas la distancia y mantienes el mismo tiempo?', '¿Qué sucede si duplicas el tiempo y mantienes la misma distancia?'], Componente: ControlaMovimiento },
+  'fm-superficie-frena': { id: 'fm-superficie-frena', titulo: 'La superficie que frena', instruccion: 'Elige una superficie y presiona «Iniciar prueba». El impulso inicial siempre es el mismo.', reflexion: ['¿Por qué cambia el recorrido al cambiar la superficie?', '¿Qué condiciones deben mantenerse iguales para comparar?'], Componente: SuperficieFrena },
   'lo-que-no-se-ve': { id: 'lo-que-no-se-ve', titulo: 'Lo que no se ve del Universo', instruccion: 'Activa la gravedad y la expansión para descubrir lo que no brilla.', reflexion: ['¿Cuántas de las 100 canicas podemos ver?', '¿Cómo saben los científicos que existe lo que no se ve?'], Componente: LoQueNoSeVe },
 };
