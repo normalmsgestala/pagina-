@@ -321,7 +321,7 @@ function PortadaTema({ m, p, ir }: { m: Modulo; p: ProgresoModulo; ir: (r: strin
             </Tarjeta>
           ))}
         </div>
-        <Seguridad />
+        {m.fases.some((f) => f.sesiones.some((x) => x.seguridad && !x.seguridadTexto)) && <Seguridad />}
       </section>
 
       <section className="space-y-3">
@@ -340,7 +340,7 @@ function PortadaTema({ m, p, ir }: { m: Modulo; p: ProgresoModulo; ir: (r: strin
       </section>
 
       <Tarjeta className="space-y-3">
-        <Titulo>Evidencia final: mi telescopio</Titulo>
+        <Titulo>Evidencia final</Titulo>
         <p className="text-stone-700">{m.evidencia}</p>
         <div className="font-semibold text-sm pt-2">¿Cómo se evalúa?</div>
         <ul className="list-disc pl-5 text-sm text-stone-700 space-y-1">{m.evaluacion.map((e) => <li key={e}>{e}</li>)}</ul>
@@ -394,7 +394,7 @@ function PaginaSesion({ m, fase, s, p, setP, ir }: { m: Modulo; fase: Fase; s: S
         <h1 className="text-3xl sm:text-4xl font-bold font-display tracking-tight">{s.titulo}</h1>
       </div>
 
-      {s.seguridad && <Seguridad />}
+      {s.seguridad && <Seguridad texto={s.seguridadTexto} />}
 
       <div className="grid md:grid-cols-3 gap-4">
         <Tarjeta className="space-y-2"><div className="text-xs font-bold text-amber-800 uppercase">Inicio</div><p className="text-stone-800">{s.inicio}</p></Tarjeta>
@@ -411,14 +411,14 @@ function PaginaSesion({ m, fase, s, p, setP, ir }: { m: Modulo; fase: Fase; s: S
         </div>
       )}
       <p className="text-sm text-stone-600"><b>Necesitas:</b> {s.recursos.join(' · ')}</p>
-      {s.numero === 1 && (
+      {m.id === 'explorando-el-universo' && s.numero === 1 && (
         <Tarjeta className="space-y-2">
           <div className="font-semibold">Video: Leo y Clara, lo que los ojos no ven</div>
           <video controls preload="metadata" className="w-full rounded-xl bg-black" src={archivoPublico(m, 'Video_Leo_y_Clara.mp4')} />
           <a className="text-sm text-amber-800 font-semibold" href={archivoPublico(m, 'Historieta_Leo_y_Clara.pdf')} target="_blank" rel="noreferrer">Descargar la historieta para pegar en tu libreta ↗</a>
         </Tarjeta>
       )}
-      {s.numero === 8 && <a className="inline-block text-sm text-amber-800 font-semibold" href={archivoPublico(m, 'Instructivo_telescopio_casero.pdf')} target="_blank" rel="noreferrer">Abrir el instructivo del telescopio casero ↗</a>}
+      {m.id === 'explorando-el-universo' && s.numero === 8 && <a className="inline-block text-sm text-amber-800 font-semibold" href={archivoPublico(m, 'Instructivo_telescopio_casero.pdf')} target="_blank" rel="noreferrer">Abrir el instructivo del telescopio casero ↗</a>}
 
       {(s.simuladores ?? []).map((id) => { const sim = SIMULADORES[id]; if (!sim) return null; const C = sim.Componente; return (
         <Tarjeta key={id} className="space-y-3 border-indigo-200">
@@ -441,9 +441,10 @@ function PaginaSesion({ m, fase, s, p, setP, ir }: { m: Modulo; fase: Fase; s: S
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
             {s.ficha.lectura.titulo && <div className="font-semibold">Lectura: {s.ficha.lectura.titulo}</div>}
             {s.ficha.lectura.parrafos.map((t, i) => <p key={i} className="text-stone-800 leading-relaxed">{t}</p>)}
+            {s.ficha.lectura.fuente && <p className="text-xs text-stone-500 pt-1">Fuente: {s.ficha.lectura.fuente}</p>}
           </div>
         )}
-        {s.numero === 3 && (
+        {m.id === 'explorando-el-universo' && s.numero === 3 && (
           <div className="rounded-xl border border-stone-200 p-4 space-y-2">
             <div className="font-semibold text-sm">Marca cada actividad de tu plan cuando la termines:</div>
             {m.plan.map((x, i) => {
