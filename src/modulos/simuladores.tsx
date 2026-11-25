@@ -469,6 +469,209 @@ const SuperficieFrena: React.FC<Props> = ({ onUse }) => {
   );
 };
 
+
+// ================================================================
+// Módulo "AguaMed NL"
+// ================================================================
+const MAGNITUDES = [
+  { id: 'L', nombre: 'Longitud', unidad: 'metro', simbolo: 'm', icono: '📏' },
+  { id: 't', nombre: 'Tiempo', unidad: 'segundo', simbolo: 's', icono: '⏱️' },
+  { id: 'm', nombre: 'Masa', unidad: 'kilogramo', simbolo: 'kg', icono: '⚖️' },
+  { id: 'T', nombre: 'Temperatura', unidad: 'kelvin', simbolo: 'K', icono: '🌡️' },
+  { id: 'I', nombre: 'Corriente eléctrica', unidad: 'ampere', simbolo: 'A', icono: '🔌' },
+  { id: 'n', nombre: 'Cantidad de sustancia', unidad: 'mol', simbolo: 'mol', icono: '🧪' },
+  { id: 'Iv', nombre: 'Intensidad luminosa', unidad: 'candela', simbolo: 'cd', icono: '💡' },
+] as const;
+type MagId = typeof MAGNITUDES[number]['id'];
+
+const MagnitudesSI: React.FC<Props> = ({ onUse }) => {
+  const usar = useUsoUnaVez(onUse);
+  const [mag, setMag] = useState<MagId>('m');
+  const [ml, setMl] = useState(500);
+  const [tara, setTara] = useState(false);
+  const [c, setC] = useState(25);
+  const [mm, setMm] = useState(2);
+  const [seg, setSeg] = useState(30);
+  const [otro, setOtro] = useState(1);
+  const M = MAGNITUDES.find((x) => x.id === mag)!;
+  const fmt = (n: number, d = 3) => n.toLocaleString('es-MX', { minimumFractionDigits: d, maximumFractionDigits: d });
+  let valor = '', mensaje = '', control: React.ReactNode = null, dibujo: React.ReactNode = null;
+  if (mag === 'm') {
+    const kg = ml / 1000 + (tara ? 0 : 0.035);
+    valor = `${fmt(kg)} kg`;
+    mensaje = ml === 1000 && tara ? '¡Exacto! 1,000 mL (1 litro) de agua pura tienen una masa de 1.000 kg en el Sistema Internacional.'
+      : tara ? `${ml} mL de agua tienen una masa de ${fmt(ml / 1000)} kg.` : 'La balanza también pesa la botella vacía (0.035 kg). Presiona «TARA» para descontarla.';
+    control = <><label className="block text-sm font-semibold text-stone-700">Agua en la botella: {ml} mL</label>
+      <input type="range" min={0} max={1000} step={50} value={ml} onChange={(e) => { usar(); setMl(+e.target.value); }} className="w-full accent-amber-700" />
+      <Boton activo={tara} onClick={() => { usar(); setTara(!tara); }}>TARA {tara ? '(activada)' : ''}</Boton></>;
+    dibujo = <g><rect x="120" y="140" width="160" height="22" rx="4" fill="#57534e" /><rect x="150" y="162" width="100" height="18" rx="3" fill="#1c1917" /><text x="200" y="176" fill="#4ade80" fontSize="12" textAnchor="middle" fontFamily="monospace">{valor}</text>
+      <rect x="180" y={140 - 100} width="40" height="100" rx="8" fill="#e0f2fe" stroke="#0284c7" /><rect x="181" y={140 - ml / 10} width="38" height={ml / 10} fill="#38bdf8" opacity="0.8" /></g>;
+  } else if (mag === 'T') {
+    valor = `${fmt(c + 273.15, 2)} K`;
+    mensaje = `En ciencia usamos el kelvin (K) sin el símbolo de grado. Fórmula: K = °C + 273.15. Ahora: ${c} °C = ${fmt(c + 273.15, 2)} K.`;
+    control = <><label className="block text-sm font-semibold text-stone-700">Temperatura del agua: {c} °C</label>
+      <input type="range" min={0} max={100} step={1} value={c} onChange={(e) => { usar(); setC(+e.target.value); }} className="w-full accent-amber-700" /></>;
+    dibujo = <g><rect x="190" y="30" width="20" height="120" rx="10" fill="#fff" stroke="#78716c" /><rect x="194" y={145 - c * 1.1} width="12" height={c * 1.1} rx="6" fill="#dc2626" /><circle cx="200" cy="155" r="16" fill="#dc2626" /></g>;
+  } else if (mag === 'L') {
+    valor = `${fmt(mm / 1000, 4)} m`;
+    mensaje = mm === 2 ? 'El orificio de 2 mm de tu tapa regadera equivale a 0.002 m en el SI.' : `${mm} mm equivalen a ${fmt(mm / 1000, 4)} m. Para pasar de milímetros a metros, divide entre 1,000.`;
+    control = <><label className="block text-sm font-semibold text-stone-700">Diámetro del orificio: {mm} mm</label>
+      <input type="range" min={0.5} max={10} step={0.5} value={mm} onChange={(e) => { usar(); setMm(+e.target.value); }} className="w-full accent-amber-700" /></>;
+    dibujo = <g><circle cx="200" cy="95" r="60" fill="#e7e5e4" stroke="#78716c" /><circle cx="200" cy="95" r={mm * 4} fill="#0c0a09" /><rect x="60" y="165" width="280" height="14" fill="#fde68a" stroke="#a16207" />{Array.from({ length: 29 }, (_, i) => <line key={i} x1={64 + i * 10} x2={64 + i * 10} y1="165" y2={i % 5 ? 170 : 174} stroke="#a16207" />)}</g>;
+  } else if (mag === 't') {
+    valor = `${seg} s`;
+    mensaje = `${seg} segundos = ${fmt(seg / 60, 2)} minutos. Para pasar de segundos a minutos, divide entre 60.`;
+    control = <><label className="block text-sm font-semibold text-stone-700">Tiempo en el cronómetro: {seg} s</label>
+      <input type="range" min={0} max={120} step={5} value={seg} onChange={(e) => { usar(); setSeg(+e.target.value); }} className="w-full accent-amber-700" /></>;
+    dibujo = <g><circle cx="200" cy="100" r="62" fill="#fff" stroke="#44403c" strokeWidth="4" /><line x1="200" y1="100" x2={200 + 50 * Math.sin((seg % 60) / 60 * 2 * Math.PI)} y2={100 - 50 * Math.cos((seg % 60) / 60 * 2 * Math.PI)} stroke="#dc2626" strokeWidth="3" /><rect x="190" y="28" width="20" height="10" fill="#44403c" /></g>;
+  } else {
+    const usos = { I: 'Mide cuánta carga eléctrica pasa por un cable cada segundo. Un foco LED usa alrededor de 0.05 A.', n: 'Cuenta partículas muy pequeñas (átomos o moléculas). 18 g de agua son 1 mol de moléculas de agua.', Iv: 'Mide qué tan intensa es la luz en una dirección. Una vela da aproximadamente 1 cd.' } as const;
+    valor = `${otro} ${M.simbolo}`;
+    mensaje = usos[mag as 'I' | 'n' | 'Iv'];
+    control = <><label className="block text-sm font-semibold text-stone-700">Valor: {otro} {M.simbolo}</label>
+      <input type="range" min={1} max={10} step={1} value={otro} onChange={(e) => { usar(); setOtro(+e.target.value); }} className="w-full accent-amber-700" /></>;
+    dibujo = <text x="200" y="120" fontSize="70" textAnchor="middle">{M.icono}</text>;
+  }
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">{MAGNITUDES.map((x) => <Boton key={x.id} activo={mag === x.id} onClick={() => { usar(); setMag(x.id); }}>{x.icono} {x.nombre}</Boton>)}</div>
+      <svg viewBox="0 0 400 190" className="w-full rounded-xl bg-white border border-stone-200">{dibujo}</svg>
+      {control}
+      <div className="rounded-xl bg-stone-900 text-white px-4 py-3 flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-sm">{M.nombre} · unidad: <b>{M.unidad}</b> · símbolo: <b>{M.simbolo}</b></span>
+        <span className="text-xl font-bold font-mono">{valor}</span>
+      </div>
+      <Mensaje>{mensaje}</Mensaje>
+    </div>
+  );
+};
+
+const BOQUILLAS = {
+  sin: { nombre: 'Sin dosificador (Q1)', factor: 1 },
+  regadera: { nombre: 'Tapa regadera (Q2)', factor: 0.5 },
+  malla: { nombre: 'Filtro de malla (Q2)', factor: 0.4 },
+} as const;
+type Boq = keyof typeof BOQUILLAS;
+
+const CaudalAhorro: React.FC<Props> = ({ onUse }) => {
+  const usar = useUsoUnaVez(onUse);
+  const [boq, setBoq] = useState<Boq>('sin');
+  const [ap, setAp] = useState(80);
+  const [tiempo, setTiempo] = useState(0);
+  const [vol, setVol] = useState(0);
+  const [midiendo, setMidiendo] = useState(false);
+  const [q1, setQ1] = useState<number | null>(null);
+  const [q2, setQ2] = useState<number | null>(null);
+  const [msg, setMsg] = useState('Elige una boquilla y presiona «Iniciar prueba de 10 s».');
+  const anim = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(anim.current), []);
+  const caudal = ap * BOQUILLAS[boq].factor; // mL/s (llave al 100 % = 100 mL/s)
+  const terminado = !midiendo && tiempo >= 10;
+  const qMedido = terminado ? Math.min(vol, 1000) / 10 : null;
+  const iniciar = () => {
+    usar(); cancelAnimationFrame(anim.current); setMidiendo(true); setMsg('Llenando la botella…');
+    const t0 = performance.now(), dur = 2500; // 10 s simulados en 2.5 s
+    const paso = (ahora: number) => {
+      const k = Math.min(1, (ahora - t0) / dur), t = 10 * k;
+      setTiempo(t); setVol(caudal * t);
+      if (k < 1) { anim.current = requestAnimationFrame(paso); return; }
+      setMidiendo(false);
+      const v = caudal * 10;
+      if (v > 1000) setMsg('¡La botella se desbordó! Baja la apertura de la llave para no pasar de 1,000 mL en 10 s.');
+      else {
+        const q = v / 10;
+        const base = `Recolectaste ${Math.round(v)} mL en 10 s. Tu caudal es de ${q.toFixed(0)} mL/s (${(q * 60 / 1000).toFixed(1)} L/min).`;
+        setMsg(boq === 'sin' ? `${base} Guárdalo como Q1.` : q1 ? `${base} Con Q1 = ${q1.toFixed(0)} mL/s lograrías ${Math.round((q1 - q) / q1 * 100)} % de ahorro. Guárdalo como Q2.` : `${base} Guárdalo como Q2.`);
+      }
+    };
+    anim.current = requestAnimationFrame(paso);
+  };
+  const vaciar = () => { usar(); cancelAnimationFrame(anim.current); setMidiendo(false); setTiempo(0); setVol(0); setMsg('Botella vacía. Lista para otra prueba.'); };
+  const guardar = (cual: 1 | 2) => {
+    usar();
+    if (cual === 2 && q1 === null) { setMsg('Primero realiza y guarda tu medición Sin Dosificador (Q1) para poder calcular el ahorro.'); return; }
+    if (qMedido === null || vol > 1000) { setMsg('Primero termina una prueba de 10 s sin que se desborde la botella.'); return; }
+    if (cual === 1) {
+      if (boq !== 'sin') { setMsg('Q1 es la medición sin dosificador. Elige «Sin dosificador» y vuelve a medir.'); return; }
+      setQ1(qMedido); setQ2(null); setMsg(`Q1 guardado: ${qMedido.toFixed(0)} mL/s (${(qMedido * 0.06).toFixed(1)} L/min). Ahora coloca un dosificador y mide Q2 con la misma apertura.`);
+    } else {
+      if (q1 === null) { setMsg('Primero realiza y guarda tu medición Sin Dosificador (Q1) para poder calcular el ahorro.'); return; }
+      if (boq === 'sin') { setMsg('Q2 es la medición con dosificador. Elige la tapa regadera o el filtro de malla.'); return; }
+      setQ2(qMedido);
+      const ah = Math.round((q1 - qMedido) / q1 * 100);
+      setMsg(`Tu caudal Q2 bajó a ${qMedido.toFixed(0)} mL/s (${(qMedido * 0.06).toFixed(1)} L/min). ¡Lograste un ${ah} % de ahorro!`);
+    }
+  };
+  const ahorro = q1 && q2 !== null ? Math.round((q1 - q2) / q1 * 100) : null;
+  const nivel = Math.min(vol, 1000) / 1000;
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">{(Object.keys(BOQUILLAS) as Boq[]).map((k) => <Boton key={k} activo={boq === k} onClick={() => { usar(); if (!midiendo) { setBoq(k); setTiempo(0); setVol(0); } }}>{BOQUILLAS[k].nombre}</Boton>)}</div>
+      <svg viewBox="0 0 400 220" className="w-full rounded-xl bg-white border border-stone-200">
+        <rect x="150" y="14" width="90" height="16" rx="5" fill="#a8a29e" /><rect x="200" y="30" width="16" height="22" fill="#a8a29e" />
+        {boq !== 'sin' && <rect x={boq === 'malla' ? 197 : 196} y="50" width="24" height="8" rx="2" fill={boq === 'malla' ? '#64748b' : '#2563eb'} />}
+        {midiendo && Array.from({ length: boq === 'regadera' ? 4 : 1 }, (_, i) => <line key={i} x1={boq === 'regadera' ? 202 + i * 4 : 208} x2={boq === 'regadera' ? 202 + i * 4 : 208} y1="58" y2={196 - 140 * nivel} stroke="#38bdf8" strokeWidth={boq === 'sin' ? 6 * ap / 100 + 1 : 2} opacity="0.85" />)}
+        <rect x="168" y="56" width="80" height="142" rx="10" fill="#f0f9ff" stroke="#0284c7" strokeWidth="2" />
+        <rect x="170" y={196 - 140 * nivel} width="76" height={140 * nivel} fill="#38bdf8" opacity="0.75" />
+        {Array.from({ length: 10 }, (_, i) => <g key={i}><line x1="168" x2="180" y1={196 - 14 * (i + 1)} y2={196 - 14 * (i + 1)} stroke="#0c4a6e" /><text x="162" y={199 - 14 * (i + 1)} fontSize="8" textAnchor="end" fill="#0c4a6e">{(i + 1) * 100}</text></g>)}
+        <rect x="290" y="16" width="96" height="34" rx="6" fill="#1c1917" /><text x="338" y="39" fill="#4ade80" fontSize="18" textAnchor="middle" fontFamily="monospace">{tiempo.toFixed(2)} s</text>
+        <text x="12" y="210" fontSize="10" fill="#57534e">botella PET graduada (mL)</text>
+      </svg>
+      <label className="block text-sm font-semibold text-stone-700">Apertura de la llave: {ap} % {ap === 80 && '(sugerida)'}</label>
+      <input type="range" min={0} max={100} step={5} value={ap} disabled={midiendo} onChange={(e) => { usar(); setAp(+e.target.value); setTiempo(0); setVol(0); }} className="w-full accent-amber-700" />
+      <div className="flex flex-wrap gap-2">
+        <Boton activo onClick={iniciar}>▶ Iniciar prueba de 10 s</Boton>
+        <Boton onClick={vaciar}>Vaciar botella</Boton>
+        <Boton onClick={() => guardar(1)}>Guardar como Q1</Boton>
+        <Boton onClick={() => guardar(2)}>Guardar como Q2</Boton>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        {[['Volumen', `${Math.round(Math.min(vol, 1000))} mL`], ['Caudal', qMedido !== null && vol <= 1000 ? `${qMedido.toFixed(0)} mL/s` : '—'], ['Ahorro', ahorro !== null ? `${ahorro} %` : '—']].map(([t, v]) => (
+          <div key={t} className="rounded-xl border border-stone-200 bg-white py-2"><div className="text-xs text-stone-500">{t}</div><div className="text-lg font-bold">{v}</div></div>
+        ))}
+      </div>
+      <p className="text-xs text-stone-500">Q1 guardado: {q1 !== null ? `${q1.toFixed(0)} mL/s` : '—'} · Q2 guardado: {q2 !== null ? `${q2.toFixed(0)} mL/s` : '—'}</p>
+      <Mensaje>{msg}</Mensaje>
+    </div>
+  );
+};
+
+const PRESAS = ['Presa La Boca', 'Presa El Cuchillo', 'Presa Cerro Prieto'] as const;
+const PresasNL: React.FC<Props> = ({ onUse }) => {
+  const usar = useUsoUnaVez(onUse);
+  const [presa, setPresa] = useState<typeof PRESAS[number]>('Presa La Boca');
+  const [alumnos, setAlumnos] = useState(500);
+  const [seg, setSeg] = useState(30);
+  const [ah, setAh] = useState(0.5);
+  const Q1 = 80; // mL/s, caudal sin dosificador del ejemplo del módulo
+  const litros = Math.round(alumnos * seg * Q1 * ah * 22 / 1000);
+  const tinacos = Math.floor(litros / 1100);
+  const nivel = Math.min(1, 0.35 + litros / 80000);
+  const fmt = (n: number) => n.toLocaleString('es-MX');
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">{PRESAS.map((p) => <Boton key={p} activo={presa === p} onClick={() => { usar(); setPresa(p); }}>{p}</Boton>)}</div>
+      <svg viewBox="0 0 400 180" className="w-full rounded-xl bg-sky-100 border border-stone-200">
+        <path d="M0 120 L60 40 L120 100 L170 30 L240 110 L300 45 L360 95 L400 60 L400 180 L0 180Z" fill="#78716c" opacity="0.5" />
+        <path d="M0 140 L90 70 L150 120 L230 60 L310 125 L400 90 L400 180 L0 180Z" fill="#57534e" opacity="0.55" />
+        <rect x="40" y={170 - 70 * nivel} width="250" height={70 * nivel} fill="#0ea5e9" opacity="0.8" />
+        <rect x="290" y="95" width="22" height="80" fill="#a8a29e" stroke="#57534e" />
+        <text x="165" y="22" fontSize="13" textAnchor="middle" fill="#1c1917" fontWeight="700">{presa}</text>
+      </svg>
+      <label className="block text-sm font-semibold text-stone-700">Alumnos de tu secundaria: {fmt(alumnos)}</label>
+      <input type="range" min={100} max={1500} step={50} value={alumnos} onChange={(e) => { usar(); setAlumnos(+e.target.value); }} className="w-full accent-amber-700" />
+      <label className="block text-sm font-semibold text-stone-700">Segundos de lavabo por alumno al día: {seg} s</label>
+      <input type="range" min={10} max={60} step={5} value={seg} onChange={(e) => { usar(); setSeg(+e.target.value); }} className="w-full accent-amber-700" />
+      <div className="flex flex-wrap gap-2"><Boton activo={ah === 0.5} onClick={() => { usar(); setAh(0.5); }}>Tapa regadera (50 %)</Boton><Boton activo={ah === 0.6} onClick={() => { usar(); setAh(0.6); }}>Filtro de malla (60 %)</Boton></div>
+      <div className="grid grid-cols-2 gap-2 text-center">
+        <div className="rounded-xl border border-stone-200 bg-white py-3"><div className="text-xs text-stone-500">Litros ahorrados al mes</div><div className="text-2xl font-bold">{fmt(litros)} L</div></div>
+        <div className="rounded-xl border border-stone-200 bg-white py-3"><div className="text-xs text-stone-500">Equivale a tinacos de 1,100 L</div><div className="text-2xl font-bold">{fmt(tinacos)}</div></div>
+      </div>
+      <Mensaje>¡Gran impacto! Con {fmt(alumnos)} alumnos, {seg} s diarios y {Math.round(ah * 100)} % de ahorro, tu escuela ahorraría <b>{fmt(litros)} litros al mes</b> ({fmt(tinacos)} tinacos llenos, en 22 días de clases), ayudando a cuidar el agua de la {presa.replace('Presa ', 'presa ')}. <span className="block mt-1 text-stone-600">Cálculo con una llave sin dosificador de 80 mL/s.</span></Mensaje>
+    </div>
+  );
+};
+
 // ----------------------------------------------------------------
 export const SIMULADORES: Record<string, InfoSimulador> = {
   'ojo-vs-telescopio': { id: 'ojo-vs-telescopio', titulo: 'Ojo vs. telescopio', instruccion: 'Mueve la barra para cambiar el tamaño de la abertura que junta la luz. Observa las estrellas y la Luna.', reflexion: ['¿Qué cambió en el cielo cuando la abertura fue más grande?', '¿Por qué tu ojo solo ve las estrellas más brillantes?'], Componente: OjoVsTelescopio },
@@ -480,5 +683,8 @@ export const SIMULADORES: Record<string, InfoSimulador> = {
   'historia-universo': { id: 'historia-universo', titulo: 'La historia del Universo', instruccion: 'Avanza escena por escena para recorrer la historia del Universo.', reflexion: ['¿Cómo era el Universo al principio y cómo es hoy?'], Componente: HistoriaUniverso },
   'fm-controla-movimiento': { id: 'fm-controla-movimiento', titulo: 'Controla el movimiento', instruccion: 'Mueve la distancia y el tiempo, y presiona «Calcular» para ver la velocidad media del carrito.', reflexion: ['¿Qué sucede con la velocidad si duplicas la distancia y mantienes el mismo tiempo?', '¿Qué sucede si duplicas el tiempo y mantienes la misma distancia?'], Componente: ControlaMovimiento },
   'fm-superficie-frena': { id: 'fm-superficie-frena', titulo: 'La superficie que frena', instruccion: 'Elige una superficie y presiona «Iniciar prueba». El impulso inicial siempre es el mismo.', reflexion: ['¿Por qué cambia el recorrido al cambiar la superficie?', '¿Qué condiciones deben mantenerse iguales para comparar?'], Componente: SuperficieFrena },
+  'sim-magnitudes-si': { id: 'sim-magnitudes-si', titulo: 'Taller de las 7 magnitudes del Sistema Internacional', instruccion: 'Elige una magnitud y mueve la barra. En la balanza, presiona «TARA» para descontar la botella vacía.', reflexion: ['¿Por qué en el Sistema Internacional la unidad base de masa es el kilogramo (kg) y no el gramo?', 'Si el agua de la llave de tu casa está a 25 °C, ¿cuántos kelvin (K) marca el termómetro?'], Componente: MagnitudesSI },
+  'sim-caudal-ahorro': { id: 'sim-caudal-ahorro', titulo: 'Laboratorio de caudal y ahorro de agua', instruccion: 'Mide primero sin dosificador y guárdalo como Q1. Después coloca un dosificador, mide con la misma apertura y guárdalo como Q2.', reflexion: ['Si dejas abierta la llave al mismo porcentaje durante 10 segundos, ¿por qué con la tapa regadera sube menos el nivel del agua?', '¿Qué pasaría con el porcentaje de ahorro si los orificios de la tapa fueran demasiado grandes?'], Componente: CaudalAhorro },
+  'sim-presas-nl': { id: 'sim-presas-nl', titulo: 'Impacto en las presas de Nuevo León', instruccion: 'Elige una presa, el número de alumnos, los segundos de lavabo y tu dosificador para ver cuánta agua ahorraría tu escuela.', reflexion: ['¿Cuántos litros ahorraría tu propia secundaria al mes si todos los lavabos tuvieran tu dosificador?', '¿Por qué pequeñas acciones multiplicadas por cientos de personas generan un impacto real en las presas del estado?'], Componente: PresasNL },
   'lo-que-no-se-ve': { id: 'lo-que-no-se-ve', titulo: 'Lo que no se ve del Universo', instruccion: 'Activa la gravedad y la expansión para descubrir lo que no brilla.', reflexion: ['¿Cuántas de las 100 canicas podemos ver?', '¿Cómo saben los científicos que existe lo que no se ve?'], Componente: LoQueNoSeVe },
 };
