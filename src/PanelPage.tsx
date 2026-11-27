@@ -10,6 +10,7 @@ import { ActivityChart } from './components/panel/ActivityChart';
 import { AiAssist } from './components/panel/AiAssist';
 import { HistoryPanel } from './components/panel/Proposals';
 import { DesignEditor } from './components/panel/DesignEditor';
+import { RepoPanel } from './components/panel/RepoPanel';
 import { CaptainWizard, CaptainTab, CaptainsOverview, VersionsPanel, useCaptainProfile } from './components/panel/CaptainPanels';
 
 const TEAMS: { id: Team; icon: any }[] = [
@@ -86,6 +87,7 @@ function Home({ user, team, go, pending }: { user: User; team: Team | ''; go: (t
           {ROLE_DUTIES[user.role].map(d => <li key={d} className="flex gap-2"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-700" />{d}</li>)}
         </ul>
         <div className="mt-4 flex flex-wrap gap-2">
+          <button onClick={() => go('repositorio')} className="rounded-full bg-[#C85A32] px-4 py-2 text-xs font-semibold text-white">Subir a repositorio</button>
           {user.role !== 'maestro' && <button onClick={() => go('publicar')} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white">Publicar algo</button>}
           {isApprover(user.role) && <button onClick={() => go('moderar')} className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Aprobaciones{pending > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white">{pending}</span>}</button>}
           {isApprover(user.role) && <a href="/" className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold">Editar la página (Modo edición)</a>}
@@ -115,7 +117,7 @@ function AiTab({ user }: { user: User }) {
   return <div className="max-w-3xl"><AiAssist tasks={tasks} hint={hint} title="Asistente de IA" allowEmptyText={user.role === 'capitan'} /></div>;
 }
 
-type Tab = 'inicio' | 'publicar' | 'mios' | 'moderar' | 'ia' | 'capitania' | 'usuarios' | 'actividad' | 'historial' | 'diseno' | 'versiones' | 'capitanes' | 'cuenta';
+type Tab = 'inicio' | 'repositorio' | 'publicar' | 'mios' | 'moderar' | 'ia' | 'capitania' | 'usuarios' | 'actividad' | 'historial' | 'diseno' | 'versiones' | 'capitanes' | 'cuenta';
 
 export default function PanelPage() {
   const { user, team, ready, refresh, setTeam } = useSession();
@@ -140,7 +142,7 @@ export default function PanelPage() {
   }
   if (user.role !== 'maestro' && user.role !== 'capitan' && (!team || picking)) return shell(<>{error && <p className="mb-4 text-center text-sm text-red-700">{error}</p>}<TeamPicker onPick={pickTeam} /></>);
 
-  const tabs: [Tab, string][] = [['inicio', 'Inicio']];
+  const tabs: [Tab, string][] = [['inicio', 'Inicio'], ['repositorio', 'Subir a repositorio']];
   if (user.role !== 'maestro') tabs.push(['publicar', 'Publicar'], ['mios', 'Mis envíos']);
   if (isApprover(user.role)) tabs.push(['moderar', 'Aprobaciones']);
   if (isMod(user.role)) tabs.push(['ia', 'Asistente de IA']);
@@ -162,6 +164,7 @@ export default function PanelPage() {
         {t === 'moderar' && approvals.count > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[11px] font-bold leading-5 text-white" aria-label={`${approvals.count} pendientes`}>{approvals.count}</span>}</button>)}
     </nav>
     {current === 'inicio' && <Home user={user} team={team} go={setTab} pending={approvals.count} />}
+    {current === 'repositorio' && <RepoPanel user={user} />}
     {current === 'publicar' && <SubmitPanel user={user} team={team} />}
     {current === 'mios' && <MySubmissions user={user} />}
     {current === 'moderar' && <ModerationPanel onChange={approvals.refresh} />}

@@ -13,7 +13,13 @@ interface Stmt {
 }
 export interface DB { prepare(sql: string): Stmt; batch(stmts: Stmt[]): Promise<unknown> }
 export interface AiBinding { run(model: string, input: Record<string, unknown>): Promise<any> }
-export interface Env { DB?: DB; AI?: AiBinding }
+/** Cubeta de Cloudflare R2 (opcional). Si no está conectada, el repositorio guarda los archivos en D1 por partes. */
+export interface R2Bucket {
+  put(key: string, value: ArrayBuffer | Uint8Array, opts?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+  get(key: string): Promise<{ arrayBuffer(): Promise<ArrayBuffer>; body: ReadableStream } | null>;
+  delete(key: string): Promise<void>;
+}
+export interface Env { DB?: DB; AI?: AiBinding; REPO?: R2Bucket }
 
 export type Role = 'admin' | 'capitan' | 'moderador' | 'editor' | 'maestro';
 export type Team = 'investigacion' | 'mecanica' | 'logistica';
@@ -998,10 +1004,254 @@ export async function handle(req: Request, env: Env): Promise<Response> {
       }
     }
 
+    // ----- repositorio de archivos de los compañeros -----
+    if (area === 'repo') return await repoRoutes(req, env, db, s, parts.slice(1), u);
+
     throw new HttpError(404, 'Ruta no encontrada');
   } catch (e) {
     if (e instanceof HttpError) return json({ error: e.message }, e.status);
     console.error(e);
     return json({ error: 'Error interno del servidor' }, 500);
   }
+}
+
+
+// =====================================================================
+// Repositorio: cada compañero sube archivos sin acomodarlos en la página;
+// el administrador los revisa, los descarga (uno por uno o en ZIP) y los marca como acomodados.
+// =====================================================================
+const REPO_CHUNK = 1_000_000;                 // D1 guarda los archivos en partes de 1 MB
+const REPO_MAX_R2 = 95 * 1024 * 1024;         // límite de una petición de Cloudflare (100 MB)
+const REPO_MAX_D1 = 20 * 1024 * 1024;
+const REPO_D1_TOTAL = 350 * 1024 * 1024;      // el plan gratuito de D1 permite 500 MB por base de datos
+const REPO_HOURLY = 80;
+const REPO_STATUS = ['pendiente', 'acomodado', 'descartado'];
+const INLINE_MIME = /^(application\/pdf|image\/(png|jpe?g|gif|webp)|text\/plain|video\/mp4|audio\/(mpeg|mp4|wav|ogg))$/;
+
+let repoReady = false;
+async function ensureRepoSchema(db: DB) {
+  if (repoReady) return;
+  await db.batch([
+    db.prepare(`CREATE TABLE IF NOT EXISTS repo_files (
+      id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, username TEXT, full_name TEXT, team TEXT,
+      name TEXT NOT NULL, mime TEXT, size INTEGER NOT NULL, note TEXT DEFAULT '', storage TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pendiente', admin_note TEXT DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS repo_chunks (file_id TEXT NOT NULL, idx INTEGER NOT NULL, data BLOB NOT NULL, PRIMARY KEY (file_id, idx))`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS repo_files_user ON repo_files (user_id, created_at)`),
+  ]);
+  repoReady = true;
+}
+
+const repoOut = (r: Row) => ({
+  id: r.id, userId: r.user_id, username: r.username, fullName: r.full_name, team: r.team, name: r.name,
+  mime: r.mime, size: r.size, note: r.note, status: r.status, adminNote: r.admin_note,
+  createdAt: r.created_at, updatedAt: r.updated_at, storage: r.storage,
+});
+
+function cleanFileName(raw: string) {
+  let n = raw;
+  try { n = decodeURIComponent(raw); } catch { /* ya venía sin codificar */ }
+  n = n.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').replace(/^\.+/, '').trim();
+  return (n || 'archivo').slice(0, 180);
+}
+
+async function repoRead(env: Env, db: DB, f: Row): Promise<Uint8Array> {
+  if (f.storage === 'r2') {
+    if (!env.REPO) throw new HttpError(503, 'El almacén de archivos (R2) no está conectado');
+    const obj = await env.REPO.get('repo/' + f.id);
+    if (!obj) throw new HttpError(404, 'El archivo ya no está en el almacén');
+    return new Uint8Array(await obj.arrayBuffer());
+  }
+  const rows = await db.prepare('SELECT data FROM repo_chunks WHERE file_id = ? ORDER BY idx').bind(f.id).all();
+  const parts = (rows.results || []).map((r: Row) => new Uint8Array(r.data as ArrayBuffer));
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+async function repoRemove(env: Env, db: DB, f: Row) {
+  if (f.storage === 'r2' && env.REPO) await env.REPO.delete('repo/' + f.id);
+  await db.batch([
+    db.prepare('DELETE FROM repo_chunks WHERE file_id = ?').bind(f.id),
+    db.prepare('DELETE FROM repo_files WHERE id = ?').bind(f.id),
+  ]);
+}
+
+// ZIP sin compresión (los PDF, imágenes y videos ya vienen comprimidos)
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(d: Uint8Array) { let c = 0xffffffff; for (let i = 0; i < d.length; i++) c = CRC_TABLE[(c ^ d[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+export function makeZip(files: { name: string; data: Uint8Array }[]): Uint8Array {
+  const enc = new TextEncoder();
+  const chunks: Uint8Array[] = []; const central: Uint8Array[] = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name); const crc = crc32(f.data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint32(14, crc, true); h.setUint32(18, f.data.length, true); h.setUint32(22, f.data.length, true); h.setUint16(26, name.length, true);
+    chunks.push(new Uint8Array(h.buffer), name, f.data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, f.data.length, true); c.setUint32(24, f.data.length, true); c.setUint16(28, name.length, true);
+    c.setUint32(42, offset, true);
+    central.push(new Uint8Array(c.buffer), name);
+    offset += 30 + name.length + f.data.length;
+  }
+  const cSize = central.reduce((n, p) => n + p.length, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+  e.setUint32(12, cSize, true); e.setUint32(16, offset, true);
+  const all = [...chunks, ...central, new Uint8Array(e.buffer)];
+  const out = new Uint8Array(all.reduce((n, p) => n + p.length, 0));
+  let o = 0; for (const p of all) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+async function repoRoutes(req: Request, env: Env, db: DB, s: Session | null, p: string[], u: URL): Promise<Response> {
+  const ss = need(s);
+  await ensureRepoSchema(db);
+  const m = req.method;
+  const isAdmin = ss.user.role === 'admin';
+  const canSeeAll = isApprover(ss.user.role) || ss.user.role === 'maestro';
+  const [sub, id, action] = p;
+
+  // subir un archivo: el cuerpo es el archivo tal cual (así el navegador puede mostrar el avance)
+  if (sub === 'upload' && m === 'POST') {
+    const recent = await db.prepare(`SELECT COUNT(*) AS n FROM repo_files WHERE user_id = ? AND created_at > datetime('now','-1 hour')`).bind(ss.user.id).first();
+    if ((recent?.n || 0) >= REPO_HOURLY) throw new HttpError(429, `Subiste ${REPO_HOURLY} archivos en la última hora. Espera un poco.`);
+    const declared = Number(req.headers.get('content-length') || 0);
+    const max = env.REPO ? REPO_MAX_R2 : REPO_MAX_D1;
+    if (declared > max) throw new HttpError(413, `El archivo pasa de ${Math.round(max / 1048576)} MB. Súbelo comprimido o déjalo en Drive y comparte el enlace en la nota.`);
+    const data = new Uint8Array(await req.arrayBuffer());
+    if (!data.length) throw new HttpError(400, 'El archivo está vacío');
+    if (data.length > max) throw new HttpError(413, `El archivo pasa de ${Math.round(max / 1048576)} MB.`);
+    const name = cleanFileName(req.headers.get('x-file-name') || 'archivo');
+    let note = '';
+    try { note = decodeURIComponent(req.headers.get('x-file-note') || ''); } catch { note = ''; }
+    note = note.slice(0, 500);
+    const mime = (req.headers.get('content-type') || 'application/octet-stream').split(';')[0].slice(0, 120);
+    const fileId = randomHex(12);
+    let storage = 'd1';
+    if (env.REPO) {
+      await env.REPO.put('repo/' + fileId, data, { httpMetadata: { contentType: mime } });
+      storage = 'r2';
+    } else {
+      const used = await db.prepare(`SELECT COALESCE(SUM(size),0) AS n FROM repo_files WHERE storage = 'd1'`).first();
+      if ((used?.n || 0) + data.length > REPO_D1_TOTAL)
+        throw new HttpError(507, 'El repositorio se llenó (350 MB en la base de datos). Avísale al administrador para conectar el almacén R2.');
+      const stmts: Stmt[] = [];
+      for (let i = 0, k = 0; i < data.length; i += REPO_CHUNK, k++)
+        stmts.push(db.prepare('INSERT INTO repo_chunks (file_id, idx, data) VALUES (?,?,?)').bind(fileId, k, data.slice(i, i + REPO_CHUNK).buffer));
+      for (let i = 0; i < stmts.length; i += 10) await db.batch(stmts.slice(i, i + 10));
+    }
+    await db.prepare(`INSERT INTO repo_files (id, user_id, username, full_name, team, name, mime, size, note, storage) VALUES (?,?,?,?,?,?,?,?,?,?)`)
+      .bind(fileId, ss.user.id, ss.user.username, ss.user.full_name, ss.team || '', name, mime, data.length, note, storage).run();
+    await log(db, ss, 'repositorio_subida', `${name} (${Math.round(data.length / 1024)} KB)`);
+    const row = await db.prepare('SELECT * FROM repo_files WHERE id = ?').bind(fileId).first();
+    return json({ file: repoOut(row!) }, 201);
+  }
+
+  // lista de archivos
+  if (sub === 'files' && !id && m === 'GET') {
+    const where: string[] = []; const args: unknown[] = [];
+    const mine = u.searchParams.get('mine') === '1' || !canSeeAll;
+    if (mine) { where.push('user_id = ?'); args.push(ss.user.id); }
+    else {
+      const who = Number(u.searchParams.get('user') || 0);
+      if (who) { where.push('user_id = ?'); args.push(who); }
+    }
+    const st = u.searchParams.get('status') || '';
+    if (st && REPO_STATUS.includes(st)) { where.push('status = ?'); args.push(st); }
+    const rows = await db.prepare(`SELECT * FROM repo_files ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 1000`).bind(...args).all();
+    return json({ files: (rows.results || []).map(repoOut) });
+  }
+
+  // avance: cuántos compañeros ya subieron y cuánto
+  if (sub === 'progress' && m === 'GET') {
+    const people = await db.prepare(
+      `SELECT u.id, u.full_name AS name, u.username, u.role, u.captain,
+              COUNT(f.id) AS files, COALESCE(SUM(f.size),0) AS bytes,
+              COALESCE(SUM(f.status = 'pendiente'),0) AS pending, COALESCE(SUM(f.status = 'acomodado'),0) AS organized,
+              MAX(f.created_at) AS last
+         FROM users u LEFT JOIN repo_files f ON f.user_id = u.id
+        WHERE u.active = 1 AND u.role <> 'maestro'
+        GROUP BY u.id ORDER BY files DESC, u.full_name`).all();
+    const list = (people.results || []) as Row[];
+    const totals = {
+      people: list.length, withFiles: list.filter(r => r.files > 0).length,
+      files: list.reduce((n, r) => n + r.files, 0), bytes: list.reduce((n, r) => n + r.bytes, 0),
+      pending: list.reduce((n, r) => n + r.pending, 0), organized: list.reduce((n, r) => n + r.organized, 0),
+      storage: env.REPO ? 'r2' : 'd1', maxFile: env.REPO ? REPO_MAX_R2 : REPO_MAX_D1, d1Limit: REPO_D1_TOTAL,
+    };
+    const me = list.find(r => r.id === ss.user.id);
+    return json({
+      totals,
+      me: me ? { files: me.files, bytes: me.bytes, pending: me.pending, organized: me.organized } : { files: 0, bytes: 0, pending: 0, organized: 0 },
+      people: canSeeAll ? list.map(r => ({ id: r.id, name: r.name, username: r.username, role: effRole(r), files: r.files, bytes: r.bytes, pending: r.pending, organized: r.organized, last: r.last })) : undefined,
+    });
+  }
+
+  // ZIP para acomodar: una carpeta por compañero (solo administrador)
+  if (sub === 'export' && m === 'GET') {
+    if (!isAdmin) throw new HttpError(403, 'Solo el administrador descarga el repositorio completo');
+    const st = u.searchParams.get('status') || 'pendiente';
+    const rows = await db.prepare(`SELECT * FROM repo_files ${REPO_STATUS.includes(st) ? 'WHERE status = ?' : ''} ORDER BY full_name, created_at`)
+      .bind(...(REPO_STATUS.includes(st) ? [st] : [])).all();
+    const files: { name: string; data: Uint8Array }[] = [];
+    const used = new Set<string>();
+    let total = 0, skipped = 0;
+    const index: string[] = ['Compañero\tArchivo\tTamaño (KB)\tFecha\tNota'];
+    for (const f of (rows.results || []) as Row[]) {
+      if (total + f.size > 90 * 1024 * 1024) { skipped++; continue; }
+      const folder = cleanFileName(f.full_name || f.username || 'sin-nombre');
+      let path = `${folder}/${f.name}`;
+      for (let k = 2; used.has(path); k++) path = `${folder}/${k}-${f.name}`;
+      used.add(path);
+      files.push({ name: path, data: await repoRead(env, db, f) });
+      total += f.size;
+      index.push([f.full_name, path, Math.round(f.size / 1024), f.created_at, (f.note || '').replace(/\s+/g, ' ')].join('\t'));
+    }
+    if (skipped) index.push(`\nFaltaron ${skipped} archivo(s) por el límite de 90 MB por descarga: márcalos como acomodados y vuelve a descargar.`);
+    files.unshift({ name: 'INDICE.tsv', data: new TextEncoder().encode(index.join('\n')) });
+    await log(db, ss, 'repositorio_descarga_zip', `${files.length - 1} archivos`);
+    return new Response(makeZip(files) as unknown as BodyInit, { headers: {
+      'content-type': 'application/zip', 'content-disposition': `attachment; filename="repositorio-leaf-${st}.zip"`, 'cache-control': 'no-store',
+    } });
+  }
+
+  if (sub === 'files' && id) {
+    const f = await db.prepare('SELECT * FROM repo_files WHERE id = ?').bind(id).first();
+    if (!f) throw new HttpError(404, 'Archivo no encontrado');
+    const own = f.user_id === ss.user.id;
+    if (!own && !canSeeAll) throw new HttpError(403, 'No tienes permiso para este archivo');
+
+    if (action === 'download' && m === 'GET') {
+      const data = await repoRead(env, db, f);
+      // nunca se abre HTML ni SVG dentro de la página: se descarga (evita que un archivo ejecute código con tu sesión)
+      const inline = u.searchParams.get('ver') === '1' && INLINE_MIME.test(f.mime || '');
+      return new Response(data as unknown as BodyInit, { headers: {
+        'content-type': inline ? f.mime : 'application/octet-stream',
+        'content-disposition': `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(f.name)}`,
+        'x-content-type-options': 'nosniff', 'content-security-policy': 'sandbox', 'cache-control': 'private, no-store',
+      } });
+    }
+    if (!action && m === 'PATCH') {
+      if (!isAdmin) throw new HttpError(403, 'Solo el administrador cambia el estado de los archivos');
+      const b = await body(req);
+      const status = str(b.status, 20, 'estado') || f.status;
+      if (!REPO_STATUS.includes(status)) throw new HttpError(400, 'Estado no válido');
+      const note = b.adminNote === undefined ? f.admin_note : str(b.adminNote, 500, 'nota');
+      await db.prepare(`UPDATE repo_files SET status = ?, admin_note = ?, updated_at = datetime('now') WHERE id = ?`).bind(status, note, id).run();
+      await log(db, ss, 'repositorio_estado', `${f.name}: ${status}`);
+      return json({ file: repoOut({ ...f, status, admin_note: note }) });
+    }
+    if (!action && m === 'DELETE') {
+      if (!isAdmin && !(own && f.status === 'pendiente')) throw new HttpError(403, 'Solo puedes borrar tus archivos que todavía no se acomodan');
+      await repoRemove(env, db, f);
+      await log(db, ss, 'repositorio_borrado', f.name);
+      return json({ ok: true });
+    }
+  }
+  throw new HttpError(404, 'Ruta no encontrada');
 }
